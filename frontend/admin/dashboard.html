@@ -469,18 +469,16 @@
   </div>
 
   <!-- Scripts -->
- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script defer src="/js/main.js"></script>
-<script defer src="/js/admin.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/admin.js"></script>
   <script>
     // Inline helper to query custom date range for bookings
     function queryCustomBookingRange() {
       const start = document.getElementById('booking-filter-start').value;
       const end = document.getElementById('booking-filter-end').value;
       if (!start || !end) {
-        window.showToast = window.showToast || function(msg) {
-  alert(msg);
-};
+        showToast('Please select start and end dates.', 'error');
         return;
       }
       loadBookingsTable(`range&startDate=${start}&endDate=${end}`);
