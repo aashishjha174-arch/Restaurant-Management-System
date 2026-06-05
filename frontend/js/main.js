@@ -1,5 +1,7 @@
 // Main client script for The Secret Garden by Phat Kath
 
+const API_BASE = 'https://restaurant-management-system-r5mg.onrender.com';
+
 // Global notification system
 function showToast(message, type = 'success') {
   let toastContainer = document.getElementById('toast-notification');
@@ -10,7 +12,6 @@ function showToast(message, type = 'success') {
     document.body.appendChild(toastContainer);
   }
 
-  // Remove existing types and add current type class
   toastContainer.classList.remove('toast-success', 'toast-error');
   toastContainer.classList.add(`toast-${type}`);
   
@@ -29,11 +30,10 @@ function showToast(message, type = 'success') {
 // 1. Fetch & Apply Dynamic Restaurant Settings
 async function loadRestaurantSettings() {
   try {
-    const response = await fetch('/api/settings');
+    const response = await fetch(`${API_BASE}/api/settings`);
     const settings = await response.json();
     if (!settings) return;
 
-    // Inject settings into elements matching CSS classes
     const addressElements = document.querySelectorAll('.settings-address');
     const phoneElements = document.querySelectorAll('.settings-phone');
     const hoursElements = document.querySelectorAll('.settings-hours');
@@ -69,7 +69,6 @@ function initNavigation() {
   const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
   const navList = document.querySelector('nav ul');
 
-  // Change header background color on scroll
   window.addEventListener('scroll', () => {
     if (window.scrollY > 50) {
       header.classList.add('scrolled');
@@ -78,7 +77,6 @@ function initNavigation() {
     }
   });
 
-  // Mobile drawer trigger
   if (mobileMenuBtn && navList) {
     mobileMenuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -86,7 +84,6 @@ function initNavigation() {
       mobileMenuBtn.innerHTML = navList.classList.contains('active') ? '✕' : '☰';
     });
 
-    // Close menu drawer on link click
     document.querySelectorAll('nav ul li a').forEach(link => {
       link.addEventListener('click', () => {
         navList.classList.remove('active');
@@ -94,7 +91,6 @@ function initNavigation() {
       });
     });
 
-    // Close on body click
     document.addEventListener('click', (e) => {
       if (!navList.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
         navList.classList.remove('active');
@@ -107,11 +103,9 @@ function initNavigation() {
 // 3. GSAP Scroll Animations Initialization
 function initScrollAnimations() {
   if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
-    // If CDN falls back, make elements visible instantly
     const animatedElements = document.querySelectorAll('.animate-on-scroll, .feature-card, .menu-card');
     animatedElements.forEach(el => el.style.opacity = 1);
     
-    // Animate hero text elements if not loaded
     const heroH1 = document.querySelector('.hero-content h1');
     const heroTag = document.querySelector('.hero-content .tagline');
     const heroDesc = document.querySelector('.hero-content .desc');
@@ -125,14 +119,12 @@ function initScrollAnimations() {
 
   gsap.registerPlugin(ScrollTrigger);
 
-  // Hero Intro Animation
   const heroTL = gsap.timeline({ defaults: { ease: 'power3.out', duration: 1 } });
   heroTL.to('.hero-content h1', { opacity: 1, y: 0, delay: 0.3 })
         .to('.hero-content .tagline', { opacity: 1, y: 0 }, '-=0.7')
         .to('.hero-content .desc', { opacity: 1, y: 0 }, '-=0.7')
         .to('.hero-content .hero-btns', { opacity: 1, y: 0 }, '-=0.7');
 
-  // General Fade up scroll animations
   const fadeUpElements = document.querySelectorAll('.animate-on-scroll');
   fadeUpElements.forEach(el => {
     gsap.fromTo(el, 
@@ -151,7 +143,6 @@ function initScrollAnimations() {
     );
   });
 
-  // Staggered grid cards
   if (document.querySelector('.feature-card')) {
     gsap.fromTo('.feature-card', 
       { opacity: 0, y: 40 },
@@ -176,7 +167,7 @@ async function initMenuPage() {
   if (!menuContainer) return;
 
   try {
-    const response = await fetch('/api/menu');
+    const response = await fetch(`${API_BASE}/api/menu`);
     const items = await response.json();
     if (!items || items.length === 0) {
       menuContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;">No menu items found. Please check back later!</div>';
@@ -185,7 +176,6 @@ async function initMenuPage() {
 
     renderMenuItems(items);
 
-    // Filter logic
     const filterButtons = document.querySelectorAll('.filter-btn');
     filterButtons.forEach(btn => {
       btn.addEventListener('click', () => {
@@ -215,12 +205,10 @@ function renderMenuItems(items) {
     const card = document.createElement('div');
     card.className = `menu-card animate-on-scroll ${item.available ? '' : 'unavailable-item'}`;
     
-    // Check for custom local image or display beautiful gold/green gradient fallback
     let imageHTML = '';
     if (item.image) {
       imageHTML = `<img src="${item.image}" alt="${item.name}" loading="lazy">`;
     } else {
-      // Create a nice gradient placeholder with initials of the item
       const initials = item.name.split(' ').map(n => n[0]).join('').slice(0, 2);
       imageHTML = `<div class="menu-placeholder-img">${initials}</div>`;
     }
@@ -256,7 +244,7 @@ async function initGalleryPage() {
   const lightboxClose = document.getElementById('lightbox-close');
 
   try {
-    const response = await fetch('/api/gallery');
+    const response = await fetch(`${API_BASE}/api/gallery`);
     const images = await response.json();
     if (!images || images.length === 0) {
       galleryGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;">No photos available in gallery yet.</div>';
@@ -272,7 +260,6 @@ async function initGalleryPage() {
         ${img.caption ? `<div class="gallery-caption">${img.caption}</div>` : ''}
       `;
       
-      // Lightbox click handler
       item.addEventListener('click', () => {
         lightboxImg.src = img.url;
         lightboxCap.textContent = img.caption || 'The Secret Garden';
@@ -283,7 +270,6 @@ async function initGalleryPage() {
       galleryGrid.appendChild(item);
     });
 
-    // Close lightbox helpers
     if (lightboxClose && lightbox) {
       const closeLightbox = () => {
         lightbox.classList.remove('active');
@@ -310,7 +296,6 @@ async function initReviewsPage() {
   const reviewsList = document.getElementById('reviews-list-container');
   if (!reviewsList) return;
 
-  // Form setup
   const form = document.getElementById('submit-review-form');
   if (form) {
     form.addEventListener('submit', async (e) => {
@@ -325,7 +310,7 @@ async function initReviewsPage() {
       }
 
       try {
-        const response = await fetch('/api/reviews', {
+        const response = await fetch(`${API_BASE}/api/reviews`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, rating, text })
@@ -345,7 +330,6 @@ async function initReviewsPage() {
     });
   }
 
-  // Load reviews list
   loadApprovedReviews();
 }
 
@@ -358,10 +342,9 @@ async function loadApprovedReviews() {
   if (!reviewsList) return;
 
   try {
-    const response = await fetch('/api/reviews');
+    const response = await fetch(`${API_BASE}/api/reviews`);
     const data = await response.json();
     
-    // Inject ratings summaries
     if (avgNum) avgNum.textContent = data.averageRating || '0.0';
     if (totalCount) totalCount.textContent = `${data.totalReviews || 0} reviews`;
     
@@ -369,7 +352,6 @@ async function loadApprovedReviews() {
       avgStars.innerHTML = getStarsHTML(Math.round(data.averageRating || 0));
     }
 
-    // Bars filling breakdown
     const breakdown = data.ratingBreakdown || {};
     const total = data.totalReviews || 1;
     for (let stars = 1; stars <= 5; stars++) {
@@ -382,7 +364,6 @@ async function loadApprovedReviews() {
       if (countLabel) countLabel.textContent = count;
     }
 
-    // List rendering
     if (!data.reviews || data.reviews.length === 0) {
       reviewsList.innerHTML = '<div style="text-align: center; padding: 30px; background: white; border-radius: 8px;">No approved reviews yet. Be the first to review us!</div>';
       return;
@@ -417,11 +398,7 @@ async function loadApprovedReviews() {
 function getStarsHTML(rating) {
   let stars = '';
   for (let i = 1; i <= 5; i++) {
-    if (i <= rating) {
-      stars += '★';
-    } else {
-      stars += '☆';
-    }
+    stars += i <= rating ? '★' : '☆';
   }
   return stars;
 }
@@ -442,7 +419,6 @@ function initContactPage() {
       return;
     }
 
-    // Simulate sending message
     showToast(`Thank you ${name}! Your message was successfully received.`, 'success');
     form.reset();
   });
@@ -454,7 +430,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavigation();
   initScrollAnimations();
   
-  // Route specific page bindings
   initMenuPage();
   initGalleryPage();
   initReviewsPage();
