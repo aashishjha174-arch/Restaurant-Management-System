@@ -1,1 +1,6 @@
-/  /pages/index.html  200
+/          /pages/index.html     200
+/menu      /pages/menu.html      200
+/booking   /pages/booking.html   200
+/gallery   /pages/gallery.html   200
+/reviews   /pages/reviews.html   200
+/contact   /pages/contact.html   200
