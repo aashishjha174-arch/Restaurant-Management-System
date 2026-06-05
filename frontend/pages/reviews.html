@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Reviews | The Secret Garden by Phat Kath</title>
+  <meta name="description" content="Read guest ratings and leave feedback about your dining experience at The Secret Garden by Phat Kath in Kathmandu, Nepal.">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Header & Navigation -->
+  <header class="scrolled">
+    <div class="nav-container">
+      <div class="logo-container">
+        <a href="/">
+          <span class="logo-text">The Secret Garden</span>
+          <span class="logo-sub">By Phat Kath</span>
+        </a>
+      </div>
+      <button class="mobile-menu-btn">☰</button>
+      <nav>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/menu">Menu</a></li>
+          <li><a href="/booking">Table Booking</a></li>
+          <li><a href="/gallery">Gallery</a></li>
+          <li><a href="/reviews" class="active">Reviews</a></li>
+          <li><a href="/contact">Contact</a></li>
+          <li><a href="/booking" class="btn btn-gold" style="padding: 8px 20px; color: var(--dark);">Book Now</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main style="padding-top: 120px; min-height: 80vh;">
+    <div class="container" style="margin-bottom: 80px;">
+      <!-- Title -->
+      <div class="section-header">
+        <h2>Guest Reviews</h2>
+        <p>What our guests say about our dining sanctuary in Kathmandu</p>
+        <div class="divider"></div>
+      </div>
+
+      <!-- Rating summary details -->
+      <div class="reviews-summary animate-on-scroll">
+        <div class="rating-avg-card">
+          <div class="rating-avg-num" id="avg-rating-value">0.0</div>
+          <div class="rating-stars" id="avg-stars-display">☆☆☆☆☆</div>
+          <div class="rating-count" id="total-reviews-count">0 reviews</div>
+        </div>
+
+        <div class="rating-breakdown-container">
+          <!-- Star row 5 -->
+          <div class="breakdown-row">
+            <span class="breakdown-label">5 Stars</span>
+            <div class="breakdown-bar-bg">
+              <div id="bar-fill-5" class="breakdown-bar-fill"></div>
+            </div>
+            <span id="bar-count-5" class="breakdown-count">0</span>
+          </div>
+          <!-- Star row 4 -->
+          <div class="breakdown-row">
+            <span class="breakdown-label">4 Stars</span>
+            <div class="breakdown-bar-bg">
+              <div id="bar-fill-4" class="breakdown-bar-fill"></div>
+            </div>
+            <span id="bar-count-4" class="breakdown-count">0</span>
+          </div>
+          <!-- Star row 3 -->
+          <div class="breakdown-row">
+            <span class="breakdown-label">3 Stars</span>
+            <div class="breakdown-bar-bg">
+              <div id="bar-fill-3" class="breakdown-bar-fill"></div>
+            </div>
+            <span id="bar-count-3" class="breakdown-count">0</span>
+          </div>
+          <!-- Star row 2 -->
+          <div class="breakdown-row">
+            <span class="breakdown-label">2 Stars</span>
+            <div class="breakdown-bar-bg">
+              <div id="bar-fill-2" class="breakdown-bar-fill"></div>
+            </div>
+            <span id="bar-count-2" class="breakdown-count">0</span>
+          </div>
+          <!-- Star row 1 -->
+          <div class="breakdown-row">
+            <span class="breakdown-label">1 Star</span>
+            <div class="breakdown-bar-bg">
+              <div id="bar-fill-1" class="breakdown-bar-fill"></div>
+            </div>
+            <span id="bar-count-1" class="breakdown-count">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Layout: List & Submission Form -->
+      <div class="reviews-layout">
+        
+        <!-- List container -->
+        <div class="reviews-list" id="reviews-list-container">
+          <!-- JS dynamic renders reviews -->
+          <div style="text-align: center; padding: 30px; background: white; border-radius: 8px;">
+            <p><i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: var(--secondary);"></i></p>
+            <p style="margin-top: 15px;">Gathering guest comments...</p>
+          </div>
+        </div>
+
+        <!-- Form container -->
+        <div class="review-form-card animate-on-scroll">
+          <h3>Write a Review</h3>
+          <p style="margin-bottom: 20px; font-size: 0.9rem; color:gray;">Share your garden dining experience with others.</p>
+          
+          <form id="submit-review-form">
+            <div class="form-group">
+              <label for="review-name">Your Name *</label>
+              <input type="text" id="review-name" required placeholder="Aarav Sharma">
+            </div>
+
+            <div class="form-group">
+              <label>Rating *</label>
+              <!-- Star selector radio -->
+              <div class="star-rating-selector">
+                <input type="radio" name="rating" id="star-5" value="5">
+                <label for="star-5" title="5 Stars">★</label>
+                
+                <input type="radio" name="rating" id="star-4" value="4">
+                <label for="star-4" title="4 Stars">★</label>
+                
+                <input type="radio" name="rating" id="star-3" value="3">
+                <label for="star-3" title="3 Stars">★</label>
+                
+                <input type="radio" name="rating" id="star-2" value="2">
+                <label for="star-2" title="2 Stars">★</label>
+                
+                <input type="radio" name="rating" id="star-1" value="1">
+                <label for="star-1" title="1 Star">★</label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="review-text">Your Review *</label>
+              <textarea id="review-text" required placeholder="Describe the food, drinks, and environment..."></textarea>
+            </div>
+
+            <p style="font-size: 0.75rem; color: gray; margin-bottom: 15px;">
+              * Note: Your review will go live once moderated and approved by the restaurant admin.
+            </p>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Review</button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <h3>The Secret Garden</h3>
+        <p>A natural botanical escape in Jogin Pakha Marg serving Nepal fusion specialties and artisanal cocktails.</p>
+        <div class="contact-socials">
+          <a href="#" class="social-icon settings-facebook" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+          <a href="#" class="social-icon settings-instagram" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+        </div>
+      </div>
+      <div class="footer-links">
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/menu">Menu</a></li>
+          <li><a href="/booking">Table Booking</a></li>
+          <li><a href="/gallery">Gallery</a></li>
+          <li><a href="/reviews">Reviews</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-hours">
+        <h4>Find Us</h4>
+        <p><i class="fa-solid fa-map-marker-alt" style="color:var(--secondary); margin-right:8px;"></i> <span class="settings-address">Jogin Pakha Marg, Kathmandu</span></p>
+        <p><i class="fa-solid fa-phone" style="color:var(--secondary); margin-right:8px;"></i> <span class="settings-phone">982-3002449</span></p>
+        <p><i class="fa-solid fa-clock" style="color:var(--secondary); margin-right:8px;"></i> <span class="settings-hours">Opens 9 AM</span> - 11 PM</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2026 The Secret Garden by Phat Kath. All Rights Reserved. | <a href="/admin/login" style="color: rgba(255,255,255,0.4); text-decoration: underline;">Admin Portal</a>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/js/main.js"></script>
+</body>
+</html>

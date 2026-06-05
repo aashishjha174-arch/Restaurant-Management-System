@@ -1,0 +1,25 @@
+{
+  "name": "secret-garden",
+  "version": "1.0.0",
+  "description": "Full-stack website for The Secret Garden by Phat Kath",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "seed": "node backend/seed.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.3.1",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.13"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Antigravity",
+  "license": "ISC"
+}

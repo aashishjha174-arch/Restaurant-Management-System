@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Table Booking | The Secret Garden by Phat Kath</title>
+  <meta name="description" content="Book a table online at The Secret Garden by Phat Kath. Check slot seat availability and reserve your spot in Kathmandu instantly.">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Header & Navigation -->
+  <header class="scrolled">
+    <div class="nav-container">
+      <div class="logo-container">
+        <a href="/">
+          <span class="logo-text">The Secret Garden</span>
+          <span class="logo-sub">By Phat Kath</span>
+        </a>
+      </div>
+      <button class="mobile-menu-btn">☰</button>
+      <nav>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/menu">Menu</a></li>
+          <li><a href="/booking" class="active">Table Booking</a></li>
+          <li><a href="/gallery">Gallery</a></li>
+          <li><a href="/reviews">Reviews</a></li>
+          <li><a href="/contact">Contact</a></li>
+          <li><a href="/booking" class="btn btn-gold" style="padding: 8px 20px; color: var(--dark);">Book Now</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main style="padding-top: 120px; min-height: 80vh;">
+    <div class="container" style="margin-bottom: 80px;">
+      <!-- Title -->
+      <div class="section-header">
+        <h2>Reserve A Table</h2>
+        <p>Confirm seat availability in real time and secure your dining spot instantly</p>
+        <div class="divider"></div>
+      </div>
+
+      <!-- Booking Form / Success Wrapper -->
+      <div id="booking-form-card" class="booking-card animate-on-scroll">
+        <div class="booking-layout">
+          
+          <!-- Intro Information -->
+          <div class="booking-intro">
+            <h3>Reservation Policies</h3>
+            <p>To ensure all our guests enjoy a mystical experience, please review our guidelines:</p>
+            <ul style="list-style: none; margin-top: 15px;">
+              <li style="margin-bottom: 12px;"><i class="fa-solid fa-check" style="color:var(--secondary); margin-right:8px;"></i> Bookings are held for a maximum of 20 minutes past the scheduled slot.</li>
+              <li style="margin-bottom: 12px;"><i class="fa-solid fa-check" style="color:var(--secondary); margin-right:8px;"></i> Maximum group size for online booking is 10. For larger groups, please contact us directly.</li>
+              <li style="margin-bottom: 12px;"><i class="fa-solid fa-check" style="color:var(--secondary); margin-right:8px;"></i> We will send a simulated confirmation receipt directly to your email address.</li>
+            </ul>
+            <p style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+              Need urgent help? Call us:<br>
+              <strong style="font-size:1.3rem; color:var(--secondary);" class="settings-phone">982-3002449</strong>
+            </p>
+          </div>
+
+          <!-- Form inputs -->
+          <div>
+            <form id="table-booking-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="booking-name">Full Name *</label>
+                  <input type="text" id="booking-name" required placeholder="Aashish Shrestha">
+                </div>
+                <div class="form-group">
+                  <label for="booking-phone">Phone Number *</label>
+                  <input type="tel" id="booking-phone" required placeholder="9823002449">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="booking-email">Email Address *</label>
+                <input type="email" id="booking-email" required placeholder="aashish@example.com">
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="booking-date">Select Date *</label>
+                  <input type="date" id="booking-date" required>
+                </div>
+                <div class="form-group">
+                  <label for="booking-seats">Number of Seats *</label>
+                  <select id="booking-seats" required>
+                    <option value="1">1 Guest</option>
+                    <option value="2" selected>2 Guests</option>
+                    <option value="3">3 Guests</option>
+                    <option value="4">4 Guests</option>
+                    <option value="5">5 Guests</option>
+                    <option value="6">6 Guests</option>
+                    <option value="7">7 Guests</option>
+                    <option value="8">8 Guests</option>
+                    <option value="9">9 Guests</option>
+                    <option value="10">10 Guests</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Real-time Slots Grid -->
+              <div class="form-group">
+                <label>Available Time Slots *</label>
+                <div id="booking-slots-container" class="slots-grid">
+                  <!-- JS injected radio slots buttons -->
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="booking-requests">Special Requests (Optional)</label>
+                <textarea id="booking-requests" placeholder="Any dietary restrictions, birthday celebrations, or preferred garden spot..."></textarea>
+              </div>
+
+              <div class="form-group">
+                <label>Select Payment Method *</label>
+                <div class="payment-options">
+                  <label class="payment-radio">
+                    <input type="radio" name="paymentMethod" value="Cash" checked>
+                    <span>Cash on arrival</span>
+                  </label>
+                  <label class="payment-radio">
+                    <input type="radio" name="paymentMethod" value="Online">
+                    <span>Online payment</span>
+                  </label>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width: 100%; font-size:1.1rem; margin-top: 15px;">Book Table</button>
+            </form>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Booking success receipt wrapper (Revealed dynamically) -->
+      <div id="booking-success-card" class="booking-success-container animate-on-scroll">
+        <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <h2>Table Reserved Successfully!</h2>
+        <p>Your booking is confirmed. We look forward to seeing you at the garden.</p>
+        
+        <div>
+          <span class="booking-id-tag" id="receipt-id">SG-XXXXXX</span>
+        </div>
+
+        <table style="width: 100%; max-width: 450px; margin: 0 auto 30px auto; border-collapse: collapse; text-align: left;">
+          <tr style="border-bottom: 1px solid var(--gray-light);">
+            <td style="padding: 10px 0; font-weight: 600; color:var(--primary);">Reserved For:</td>
+            <td style="padding: 10px 0; text-align: right;" id="receipt-name">-</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--gray-light);">
+            <td style="padding: 10px 0; font-weight: 600; color:var(--primary);">Reservation Date:</td>
+            <td style="padding: 10px 0; text-align: right;" id="receipt-date">-</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--gray-light);">
+            <td style="padding: 10px 0; font-weight: 600; color:var(--primary);">Time Slot:</td>
+            <td style="padding: 10px 0; text-align: right;" id="receipt-time">-</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--gray-light);">
+            <td style="padding: 10px 0; font-weight: 600; color:var(--primary);">Party Size:</td>
+            <td style="padding: 10px 0; text-align: right;" id="receipt-seats">-</td>
+          </tr>
+          <tr style="border-bottom: 1px solid var(--gray-light);">
+            <td style="padding: 10px 0; font-weight: 600; color:var(--primary);">Payment Details:</td>
+            <td style="padding: 10px 0; text-align: right;" id="receipt-payment">-</td>
+          </tr>
+        </table>
+
+        <p style="font-size:0.85rem; color:gray; margin-bottom: 25px;">A copy of this confirmation has been sent to your email address.</p>
+        <a href="/booking" class="btn btn-secondary" onclick="window.location.reload();">Book Another Table</a>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <h3>The Secret Garden</h3>
+        <p>A natural botanical escape in Jogin Pakha Marg serving Nepal fusion specialties and artisanal cocktails.</p>
+        <div class="contact-socials">
+          <a href="#" class="social-icon settings-facebook" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+          <a href="#" class="social-icon settings-instagram" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+        </div>
+      </div>
+      <div class="footer-links">
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/menu">Menu</a></li>
+          <li><a href="/booking">Table Booking</a></li>
+          <li><a href="/gallery">Gallery</a></li>
+          <li><a href="/reviews">Reviews</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-hours">
+        <h4>Find Us</h4>
+        <p><i class="fa-solid fa-map-marker-alt" style="color:var(--secondary); margin-right:8px;"></i> <span class="settings-address">Jogin Pakha Marg, Kathmandu</span></p>
+        <p><i class="fa-solid fa-phone" style="color:var(--secondary); margin-right:8px;"></i> <span class="settings-phone">982-3002449</span></p>
+        <p><i class="fa-solid fa-clock" style="color:var(--secondary); margin-right:8px;"></i> <span class="settings-hours">Opens 9 AM</span> - 11 PM</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2026 The Secret Garden by Phat Kath. All Rights Reserved. | <a href="/admin/login" style="color: rgba(255,255,255,0.4); text-decoration: underline;">Admin Portal</a>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/js/main.js"></script>
+  <script src="/js/booking.js"></script>
+</body>
+</html>

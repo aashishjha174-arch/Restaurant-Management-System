@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery | The Secret Garden by Phat Kath</title>
+  <meta name="description" content="Browse through the gorgeous photos of The Secret Garden by Phat Kath restaurant, bar, and outdoor botanical space in Kathmandu.">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Header & Navigation -->
+  <header class="scrolled">
+    <div class="nav-container">
+      <div class="logo-container">
+        <a href="/">
+          <span class="logo-text">The Secret Garden</span>
+          <span class="logo-sub">By Phat Kath</span>
+        </a>
+      </div>
+      <button class="mobile-menu-btn">☰</button>
+      <nav>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/menu">Menu</a></li>
+          <li><a href="/booking">Table Booking</a></li>
+          <li><a href="/gallery" class="active">Gallery</a></li>
+          <li><a href="/reviews">Reviews</a></li>
+          <li><a href="/contact">Contact</a></li>
+          <li><a href="/booking" class="btn btn-gold" style="padding: 8px 20px; color: var(--dark);">Book Now</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main style="padding-top: 120px;">
+    <section class="container">
+      <!-- Title Header -->
+      <div class="section-header animate-on-scroll">
+        <h2>Photo Gallery</h2>
+        <p>A glimpse into our serene garden pathways, hand-crafted cocktails, and chef's plates</p>
+        <div class="divider"></div>
+      </div>
+
+      <!-- Masonry Grid -->
+      <div id="gallery-items-grid" class="gallery-grid animate-on-scroll">
+        <!-- JS dynamically renders photos here -->
+        <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+          <p><i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: var(--secondary);"></i></p>
+          <p style="margin-top: 15px;">Gathering gallery photos...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Lightbox Element -->
+  <div id="gallery-lightbox" class="lightbox">
+    <div class="lightbox-content">
+      <button id="lightbox-close" class="lightbox-close">✕</button>
+      <img id="lightbox-img" src="" alt="Gallery Image Expanded">
+      <div id="lightbox-caption" class="lightbox-caption">-</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <h3>The Secret Garden</h3>
+        <p>A natural botanical escape in Jogin Pakha Marg serving Nepal fusion specialties and artisanal cocktails.</p>
+        <div class="contact-socials">
+          <a href="#" class="social-icon settings-facebook" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+          <a href="#" class="social-icon settings-instagram" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+        </div>
+      </div>
+      <div class="footer-links">
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/menu">Menu</a></li>
+          <li><a href="/booking">Table Booking</a></li>
+          <li><a href="/gallery">Gallery</a></li>
+          <li><a href="/reviews">Reviews</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-hours">
+        <h4>Find Us</h4>
+        <p><i class="fa-solid fa-map-marker-alt" style="color:var(--secondary); margin-right:8px;"></i> <span class="settings-address">Jogin Pakha Marg, Kathmandu</span></p>
+        <p><i class="fa-solid fa-phone" style="color:var(--secondary); margin-right:8px;"></i> <span class="settings-phone">982-3002449</span></p>
+        <p><i class="fa-solid fa-clock" style="color:var(--secondary); margin-right:8px;"></i> <span class="settings-hours">Opens 9 AM</span> - 11 PM</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      &copy; 2026 The Secret Garden by Phat Kath. All Rights Reserved. | <a href="/admin/login" style="color: rgba(255,255,255,0.4); text-decoration: underline;">Admin Portal</a>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/js/main.js"></script>
+</body>
+</html>
