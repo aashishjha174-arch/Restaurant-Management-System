@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     slotsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; font-size: 0.9rem;">Checking slot availability...</div>';
 
     try {
-      const response = await fetch(`/api/bookings/availability?date=${selectedDate}`);
+      const response = await fetch(`https://https://restaurant-management-system-r5mg.onrender.com/api/bookings/availability?date=${selectedDate}`);
       const data = await response.json();
       
       currentSlotsCache = data.slots;
@@ -108,11 +108,11 @@ document.addEventListener('DOMContentLoaded', () => {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Securing Table...';
 
-      const response = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      const response = await fetch('https://restaurant-management-system-r5mg.onrender.com/api/bookings', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(payload)
+});
       const data = await response.json();
 
       if (response.status === 201 && data.success) {
