@@ -9,12 +9,17 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/secret-garden';
 
-app.get("/health", async (req, res) => {
-  try {
-    res.status(200).json({ status: "alive" });
-  } catch (err) {
-    res.status(500).json({ status: "error" });
-  }
+app.get("/health", (req, res) => {
+  const dbState = mongoose.connection.readyState;
+
+  res.status(200).json({
+    server: "alive",
+    database:
+      dbState === 1 ? "connected"
+      : dbState === 2 ? "connecting"
+      : dbState === 0 ? "disconnected"
+      : "unknown"
+  });
 });
 // Middleware
 app.use(cors({
@@ -84,17 +89,25 @@ app.use((req, res) => {
 
 // Database Connection and Server Boot
 console.log('Connecting to database:', MONGODB_URI);
-mongoose.connect(MONGODB_URI)
-  .then(() => {
-    console.log('Successfully connected to MongoDB.');
-    app.listen(PORT, () => {
-      console.log(`Server is running locally on http://localhost:${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error('Database connection failed. Express server will run but DB calls will fail:', error.message);
-    // Boot server anyway so frontend remains accessible and display warning banner
-    app.listen(PORT, () => {
-      console.log(`Server running in database fallback mode on http://localhost:${PORT}`);
-    });
+
+mongoose.connect(MONGODB_URI, {
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 10000,
+})
+.then(() => {
+  console.log('Successfully connected to MongoDB.');
+
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
   });
+})
+.catch((error) => {
+  console.error('MongoDB connection failed:', error.message);
+
+  console.log('Starting server in fallback mode (NO DB)...');
+
+  app.listen(PORT, () => {
+    console.log(`Server running in fallback mode on http://localhost:${PORT}`);
+  });
+});
