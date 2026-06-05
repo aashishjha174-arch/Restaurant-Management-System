@@ -7,55 +7,49 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/secret-garden';
 
-
-// -------------------- HEALTH CHECK --------------------
-app.get("/health", (req, res) => {
-  const dbState = mongoose.connection.readyState;
-
-  res.status(200).json({
-    server: "alive",
-    database:
-      dbState === 1 ? "connected"
-      : dbState === 2 ? "connecting"
-      : dbState === 0 ? "disconnected"
-      : "unknown"
-  });
-});
-
-
-// -------------------- MIDDLEWARE (ONLY ONCE) --------------------
+/* ---------------- CORS (FIXED ONCE ONLY) ---------------- */
 app.use(cors({
   origin: [
-    'https://gardenrestaurant.netlify.app',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000'
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://localhost:5500',
+    'https://restaurant-management-system-r5mg.onrender.com'
   ],
   credentials: true
 }));
 
+/* ---------------- CORE MIDDLEWARE ---------------- */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+/* ---------------- HEALTH CHECK ---------------- */
+app.get("/health", (req, res) => {
+  const state = mongoose.connection.readyState;
 
-// -------------------- UPLOADS --------------------
+  res.json({
+    server: "alive",
+    database:
+      state === 1 ? "connected"
+      : state === 2 ? "connecting"
+      : state === 0 ? "disconnected"
+      : "unknown"
+  });
+});
+
+/* ---------------- UPLOADS ---------------- */
 const uploadsDir = path.join(__dirname, 'uploads');
-
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
-
 app.use('/uploads', express.static(uploadsDir));
 
-
-// -------------------- STATIC FRONTEND --------------------
+/* ---------------- FRONTEND ---------------- */
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-
-// -------------------- API ROUTES --------------------
+/* ---------------- API ROUTES ---------------- */
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/menu', require('./routes/menu'));
@@ -63,68 +57,24 @@ app.use('/api/gallery', require('./routes/gallery'));
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/settings', require('./routes/settings'));
 
-
-// -------------------- PAGE ROUTES --------------------
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/pages/index.html'));
-});
-
-app.get('/menu', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/pages/menu.html'));
-});
-
-app.get('/booking', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/pages/booking.html'));
-});
-
-app.get('/gallery', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/pages/gallery.html'));
-});
-
-app.get('/reviews', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/pages/reviews.html'));
-});
-
-app.get('/contact', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/pages/contact.html'));
-});
-
-app.get('/admin/login', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/admin/login.html'));
-});
-
+/* ---------------- PAGES ---------------- */
 app.get('/admin/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/admin/dashboard.html'));
 });
 
-
-// -------------------- 404 FALLBACK --------------------
-app.use((req, res) => {
-  res.status(404).sendFile(path.join(__dirname, '../frontend/pages/index.html'));
-});
-
-
-// -------------------- DATABASE + SERVER --------------------
-console.log('Connecting to database:', MONGODB_URI);
-
-mongoose.connect(MONGODB_URI, {
-  serverSelectionTimeoutMS: 5000,
-  socketTimeoutMS: 45000,
-  connectTimeoutMS: 10000,
-})
+/* ---------------- DB + SERVER ---------------- */
+mongoose.connect(MONGODB_URI)
 .then(() => {
-  console.log('MongoDB connected successfully');
+  console.log("MongoDB connected");
 
   app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running: http://localhost:${PORT}`);
   });
 })
-.catch((error) => {
-  console.error('MongoDB connection failed:', error.message);
-
-  console.log('Starting server without DB...');
+.catch(err => {
+  console.error("DB Error:", err.message);
 
   app.listen(PORT, () => {
-    console.log(`Server running in fallback mode on http://localhost:${PORT}`);
+    console.log("Server running WITHOUT DB");
   });
 });
