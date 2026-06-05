@@ -352,3 +352,5 @@ document.addEventListener('DOMContentLoaded', () => {
   const defaultTab = document.querySelector('.sidebar-item.active');
   if (defaultTab) onTabActivated(defaultTab.dataset.tab);
 });
+window.loadBookingsTable = loadBookingsTable;
+window.queryCustomBookingRange = queryCustomBookingRange;
