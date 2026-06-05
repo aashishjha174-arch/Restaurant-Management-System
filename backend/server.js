@@ -9,6 +9,13 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/secret-garden';
 
+app.get("/health", async (req, res) => {
+  try {
+    res.status(200).json({ status: "alive" });
+  } catch (err) {
+    res.status(500).json({ status: "error" });
+  }
+});
 // Middleware
 app.use(cors({
   origin: ['https://gardenrestaurant.netlify.app', 'http://localhost:3000'],
