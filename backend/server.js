@@ -22,10 +22,6 @@ app.get("/health", (req, res) => {
   });
 });
 // Middleware
-app.use(cors({
-  origin: ['https://gardenrestaurant.netlify.app', 'http://localhost:3000'],
-  credentials: true
-}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
