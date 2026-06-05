@@ -11,7 +11,7 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/secret
 
 // Middleware
 app.use(cors({
-  origin: ['https://gardenrestaurant.netlify.app/', 'http://localhost:3000'],
+  origin: ['https://gardenrestaurant.netlify.app', 'http://localhost:3000'],
   credentials: true
 }));
 app.use(express.json());
