@@ -71,7 +71,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
 
     let imagePath = '';
     if (req.file) {
-      imagePath = `/uploads/${req.file.filename}`;
+      imagePath = `${process.env.BACKEND_URL}/uploads/${req.file.filename}`;
     }
 
     const newItem = new MenuItem({
