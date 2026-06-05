@@ -1,7 +1,6 @@
 // Main client script for The Secret Garden by Phat Kath
 
-const API_BASE = 'https://restaurant-management-system-r5mg.onrender.com';
-
+window.API_BASE = 'https://restaurant-management-system-r5mg.onrender.com';
 // Global notification system
 function showToast(message, type = 'success') {
   let toastContainer = document.getElementById('toast-notification');

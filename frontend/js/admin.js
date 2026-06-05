@@ -2,9 +2,7 @@
 // =====================
 // CONFIG
 // =====================
-const API_BASE =
-  window.API_BASE ||
-  'https://restaurant-management-system-r5mg.onrender.com';
+const API_BASE = window.API_BASE;
 
 // =====================
 // SAFE FETCH WRAPPER (CRITICAL)

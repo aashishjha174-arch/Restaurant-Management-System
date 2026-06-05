@@ -111,3 +111,13 @@ mongoose.connect(MONGODB_URI, {
     console.log(`Server running in fallback mode on http://localhost:${PORT}`);
   });
 });
+const cors = require('cors');
+
+app.use(cors({
+  origin: [
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'https://restaurant-management-system-r5mg.onrender.com'
+  ],
+  credentials: true
+}));
