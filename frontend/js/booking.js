@@ -1,5 +1,7 @@
 // Reservation script for The Secret Garden by Phat Kath
 
+const API_BASE = 'https://restaurant-management-system-r5mg.onrender.com';
+
 document.addEventListener('DOMContentLoaded', () => {
   const bookingForm = document.getElementById('table-booking-form');
   const dateInput = document.getElementById('booking-date');
@@ -26,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     slotsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; font-size: 0.9rem;">Checking slot availability...</div>';
 
     try {
-      const response = await fetch(`https://https://restaurant-management-system-r5mg.onrender.com/api/bookings/availability?date=${selectedDate}`);
+      const response = await fetch(`${API_BASE}/api/bookings/availability?date=${selectedDate}`);
       const data = await response.json();
       
       currentSlotsCache = data.slots;
@@ -108,22 +110,21 @@ document.addEventListener('DOMContentLoaded', () => {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Securing Table...';
 
-      const response = await fetch('https://restaurant-management-system-r5mg.onrender.com/api/bookings', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(payload)
-});
+      const response = await fetch(`${API_BASE}/api/bookings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
       const data = await response.json();
 
       if (response.status === 201 && data.success) {
-        // Success flow
         showToast('Table booked successfully!', 'success');
         renderReceipt(data.booking);
       } else {
         showToast(data.message || 'Booking failed. Please try again.', 'error');
         submitBtn.disabled = false;
         submitBtn.textContent = 'Book Table';
-        checkAvailability(); // refresh slots
+        checkAvailability();
       }
     } catch (error) {
       console.error('Submit booking failed:', error);
@@ -134,11 +135,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Render reservation receipt dynamically
   function renderReceipt(booking) {
-    // Hide form, reveal success receipt
     formCard.style.display = 'none';
     successCard.style.display = 'block';
 
-    // Inject details
     document.getElementById('receipt-id').textContent = booking.bookingId;
     document.getElementById('receipt-name').textContent = booking.name;
     document.getElementById('receipt-date').textContent = booking.date;
@@ -146,7 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('receipt-seats').textContent = `${booking.seats} Seats`;
     document.getElementById('receipt-payment').textContent = `${booking.paymentMethod} (${booking.paymentStatus})`;
     
-    // Scroll receipt to viewport
     successCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 });
