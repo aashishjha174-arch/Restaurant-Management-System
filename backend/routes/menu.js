@@ -1,3 +1,4 @@
+const BASE_URL = process.env.BACKEND_URL || 'https://restaurant-management-system-r5mg.onrender.com';
 const router = require('express').Router();
 const MenuItem = require('../models/MenuItem');
 const authMiddleware = require('../middleware/auth');
@@ -71,7 +72,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
 
     let imagePath = '';
     if (req.file) {
-      imagePath = `${process.env.BACKEND_URL}/uploads/${req.file.filename}`;
+      imagePath = `${BASE_URL}/uploads/${req.file.filename}`;
     }
 
     const newItem = new MenuItem({
@@ -116,7 +117,7 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
       if (item.image && item.image.startsWith('/uploads/')) {
         deleteLocalFile(item.image);
       }
-      updateData.image = `/uploads/${req.file.filename}`;
+      updateData.image = `${BASE_URL}/uploads/${req.file.filename}`;
     }
 
     const updatedItem = await MenuItem.findByIdAndUpdate(
