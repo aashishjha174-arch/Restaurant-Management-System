@@ -1,150 +1,53 @@
-// Reservation script for The Secret Garden by Phat Kath
+const API_BASE = window.location.origin;
 
-
-
-document.addEventListener('DOMContentLoaded', () => {
-  const bookingForm = document.getElementById('table-booking-form');
-  const dateInput = document.getElementById('booking-date');
-  const seatsInput = document.getElementById('booking-seats');
-  const slotsContainer = document.getElementById('booking-slots-container');
-  const formCard = document.getElementById('booking-form-card');
-  const successCard = document.getElementById('booking-success-card');
-  
-  if (!bookingForm) return;
-
-  // Set minimum date to today
-  const today = new Date().toISOString().split('T')[0];
-  dateInput.min = today;
-  dateInput.value = today;
-
-  // Global state for slots availability cache
-  let currentSlotsCache = null;
-
-  // Fetch slot counts from backend for the selected date
-  async function checkAvailability() {
-    const selectedDate = dateInput.value;
-    if (!selectedDate) return;
-
-    slotsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; font-size: 0.9rem;">Checking slot availability...</div>';
-
-    try {
-      const response = await fetch(`${API_BASE}/api/bookings/availability?date=${selectedDate}`);
-      const data = await response.json();
-      
-      currentSlotsCache = data.slots;
-      renderSlots();
-    } catch (error) {
-      console.error('Error fetching availability:', error);
-      slotsContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--red); font-size: 0.9rem;">Failed to load slot capacities.</div>';
-    }
-  }
-
-  // Render slots in HTML based on availability and required seats
-  function renderSlots() {
-    if (!currentSlotsCache) return;
-
-    const seatsRequired = parseInt(seatsInput.value) || 1;
-    slotsContainer.innerHTML = '';
-
-    Object.entries(currentSlotsCache).forEach(([slot, remainingSeats], index) => {
-      const isAvailable = remainingSeats >= seatsRequired;
-      const slotId = `slot-${index}`;
-
-      const optionWrapper = document.createElement('div');
-      optionWrapper.className = 'slot-option';
-
-      optionWrapper.innerHTML = `
-        <input type="radio" name="timeSlot" id="${slotId}" value="${slot}" ${isAvailable ? '' : 'disabled'}>
-        <label for="${slotId}" class="slot-label ${isAvailable ? '' : 'disabled'}">
-          <span class="slot-time">${slot.split(' - ')[0]}</span>
-          <span class="slot-seats">
-            ${isAvailable ? `${remainingSeats} seats left` : 'Fully Booked'}
-          </span>
-        </label>
-      `;
-
-      slotsContainer.appendChild(optionWrapper);
+/* ---------------- CREATE BOOKING ---------------- */
+async function createBooking(formData) {
+  try {
+    const res = await fetch(`${API_BASE}/api/bookings`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(formData)
     });
-  }
 
-  // Bind availability updates
-  dateInput.addEventListener('change', checkAvailability);
-  seatsInput.addEventListener('input', renderSlots);
+    const data = await res.json();
 
-  // Initial load
-  checkAvailability();
-
-  // Handle booking submissions
-  bookingForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const name = document.getElementById('booking-name').value.trim();
-    const email = document.getElementById('booking-email').value.trim();
-    const phone = document.getElementById('booking-phone').value.trim();
-    const date = dateInput.value;
-    const seats = parseInt(seatsInput.value);
-    const selectedSlotRadio = document.querySelector('input[name="timeSlot"]:checked');
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-    const specialRequests = document.getElementById('booking-requests').value.trim();
-
-    if (!name || !email || !phone || !date || !seats || !selectedSlotRadio || !paymentMethod) {
-      showToast('Please complete all required fields.', 'error');
+    if (!res.ok) {
+      console.error("Booking failed:", data);
+      alert(data.message || "Booking failed");
       return;
     }
 
-    const time = selectedSlotRadio.value;
+    alert("Booking successful ✨");
+    return data;
 
-    const payload = {
-      name,
-      email,
-      phone,
-      date,
-      time,
-      seats,
-      paymentMethod,
-      specialRequests
+  } catch (err) {
+    console.error("Error:", err);
+  }
+}
+
+/* ---------------- FORM HANDLER ---------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.querySelector("#booking-form");
+
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = {
+      name: document.querySelector("#name").value,
+      contact: document.querySelector("#contact").value,
+      date: document.querySelector("#date").value,
+      time: document.querySelector("#time").value,
+      seats: Number(document.querySelector("#seats").value),
+      paymentMethod: document.querySelector("#paymentMethod")?.value || "cash",
+      paymentStatus: "Pending",
+      status: "Pending"
     };
 
-    try {
-      const submitBtn = bookingForm.querySelector('button[type="submit"]');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Securing Table...';
-
-      const response = await fetch(`${API_BASE}/api/bookings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-
-      if (response.status === 201 && data.success) {
-        showToast('Table booked successfully!', 'success');
-        renderReceipt(data.booking);
-      } else {
-        showToast(data.message || 'Booking failed. Please try again.', 'error');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Book Table';
-        checkAvailability();
-      }
-    } catch (error) {
-      console.error('Submit booking failed:', error);
-      showToast('Connection error. Failed to send booking.', 'error');
-      bookingForm.querySelector('button[type="submit"]').disabled = false;
-    }
+    await createBooking(formData);
+    form.reset();
   });
-
-  // Render reservation receipt dynamically
-  function renderReceipt(booking) {
-    formCard.style.display = 'none';
-    successCard.style.display = 'block';
-
-    document.getElementById('receipt-id').textContent = booking.bookingId;
-    document.getElementById('receipt-name').textContent = booking.name;
-    document.getElementById('receipt-date').textContent = booking.date;
-    document.getElementById('receipt-time').textContent = booking.time;
-    document.getElementById('receipt-seats').textContent = `${booking.seats} Seats`;
-    document.getElementById('receipt-payment').textContent = `${booking.paymentMethod} (${booking.paymentStatus})`;
-    
-    successCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
 });
