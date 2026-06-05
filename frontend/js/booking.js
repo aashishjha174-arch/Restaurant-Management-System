@@ -1,6 +1,6 @@
 // Reservation script for The Secret Garden by Phat Kath
 
-const API_BASE = 'https://restaurant-management-system-r5mg.onrender.com';
+
 
 document.addEventListener('DOMContentLoaded', () => {
   const bookingForm = document.getElementById('table-booking-form');
