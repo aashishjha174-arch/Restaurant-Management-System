@@ -1,354 +1,277 @@
+// =====================
+// API BASE (ONLY ONCE)
+// =====================
+const API_BASE = "https://restaurant-management-system-r5mg.onrender.com";
 
 // =====================
-// CONFIG
+// INIT
 // =====================
-const API_BASE = window.API_BASE;
+document.addEventListener("DOMContentLoaded", () => {
+  initDashboard();
 
-// =====================
-// SAFE FETCH WRAPPER (CRITICAL)
-// =====================
-async function safeFetch(url, options = {}, timeout = 10000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeout);
+  loadBookingsTable("today");
+  loadMenuItems();
+  loadGallery();
+  loadReviews();
 
-  try {
-    const res = await fetch(url, {
-      ...options,
-      signal: controller.signal
-    });
-
-    if (!res.ok && res.status === 401) {
-      handleSessionExpired();
-      throw new Error("Unauthorized");
-    }
-
-    return res;
-  } catch (err) {
-    console.error("Fetch failed:", url, err.message);
-    throw err;
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-// =====================
-// GLOBAL STATE
-// =====================
-let currentBookings = [];
-let chartInstance = null;
-
-// =====================
-// AUTH
-// =====================
-function checkAuth() {
-  const token = localStorage.getItem('sg_admin_token');
-  const isLoginPage =
-    window.location.pathname.includes('/admin/login');
-
-  if (!token && !isLoginPage) {
-    window.location.href = '/admin/login';
-  } else if (token && isLoginPage) {
-    window.location.href = '/admin/dashboard';
-  }
-}
-
-function getHeaders() {
-  const token = localStorage.getItem('sg_admin_token');
-
-  return {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  };
-}
-
-// =====================
-// LOGIN
-// =====================
-function initLoginPage() {
-  const form = document.getElementById('admin-login-form');
-  if (!form) return;
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-
-    try {
-      const res = await safeFetch(`${API_BASE}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        localStorage.setItem('sg_admin_token', data.token);
-        localStorage.setItem('sg_admin_username', data.admin.username);
-
-        showToast('Login successful!', 'success');
-
-        setTimeout(() => {
-          window.location.href = '/admin/dashboard';
-        }, 800);
-      } else {
-        showToast(data.message || 'Login failed', 'error');
-      }
-    } catch {
-      showToast('Server error', 'error');
-    }
-  });
-}
-
-// =====================
-// DASHBOARD TABS
-// =====================
-function initDashboardTabs() {
-  const items = document.querySelectorAll('.sidebar-item');
-  const panels = document.querySelectorAll('.dashboard-tab-panel');
-
-  if (!items.length) return;
-
-  items.forEach(item => {
-    item.addEventListener('click', () => {
-      const tabId = item.dataset.tab;
-
-      items.forEach(i => i.classList.remove('active'));
-      panels.forEach(p => p.classList.remove('active'));
-
-      item.classList.add('active');
-
-      const panel = document.getElementById(tabId);
-      if (panel) {
-        panel.classList.add('active');
-        onTabActivated(tabId);
-      }
-    });
-  });
-
-  const user = localStorage.getItem('sg_admin_username') || 'Admin';
-
-  const nameEl = document.getElementById('admin-user-display-name');
-  const avatarEl = document.getElementById('admin-user-avatar-initial');
-
-  if (nameEl) nameEl.textContent = user;
-  if (avatarEl) avatarEl.textContent = user[0].toUpperCase();
-
-  const logout = document.getElementById('admin-logout-btn');
-  if (logout) {
-    logout.onclick = () => {
-      localStorage.clear();
-      window.location.href = '/admin/login';
-    };
-  }
-}
-
-function onTabActivated(tabId) {
-  switch (tabId) {
-    case 'tab-dashboard':
-      loadDashboardMetrics();
-      break;
-    case 'tab-bookings':
-      loadBookingsTable('all');
-      break;
-    case 'tab-menu':
-      loadMenuTable();
-      break;
-    case 'tab-gallery':
-      loadGalleryManager();
-      break;
-    case 'tab-reviews':
-      loadReviewsManager();
-      break;
-    case 'tab-settings':
-      loadSettingsEditor();
-      break;
-  }
-}
+  setupTabs();
+  setupLogout();
+});
 
 // =====================
 // DASHBOARD
 // =====================
-async function loadDashboardMetrics() {
+async function initDashboard() {
   try {
-    const res = await safeFetch(`${API_BASE}/api/bookings`, {
-      headers: getHeaders()
-    });
-
+    const res = await fetch(`${API_BASE}/api/bookings`);
     const bookings = await res.json();
-    currentBookings = bookings;
 
-    const today = new Date().toISOString().split('T')[0];
-
-    const todayBookings = bookings.filter(b => b.date === today);
-
-    safeSet('kpi-today-bookings', todayBookings.length);
-
+    updateKPIs(bookings);
+    loadRecentBookings(bookings);
+    renderChart(bookings);
   } catch (err) {
-    console.error(err);
+    console.error("Dashboard error:", err);
   }
 }
 
-function safeSet(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value;
+// =====================
+// KPIs
+// =====================
+function updateKPIs(bookings) {
+  const today = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+
+  const todayBookings = bookings.filter(b => b.date === today);
+  const tomorrowBookings = bookings.filter(b => b.date === tomorrow);
+
+  const seatsToday = todayBookings.reduce((sum, b) => sum + (b.seats || 0), 0);
+
+  const revenueToday = todayBookings.reduce(
+    (sum, b) => sum + (b.totalAmount || 0),
+    0
+  );
+
+  document.getElementById("kpi-today-bookings").textContent = todayBookings.length;
+  document.getElementById("kpi-today-seats").textContent = seatsToday;
+  document.getElementById("kpi-tomorrow-bookings").textContent = tomorrowBookings.length;
+  document.getElementById("kpi-revenue-today").textContent = `Rs ${revenueToday}`;
 }
 
 // =====================
-// BOOKINGS
+// RECENT BOOKINGS
 // =====================
-async function loadBookingsTable(type = 'all') {
-  const tbody = document.getElementById('bookings-table-tbody');
-  if (!tbody) return;
+function loadRecentBookings(bookings) {
+  const tbody = document.getElementById("recent-bookings-list-tbody");
+  tbody.innerHTML = "";
 
-  tbody.innerHTML = 'Loading...';
+  const today = new Date().toISOString().split("T")[0];
 
-  try {
-    const res = await safeFetch(`${API_BASE}/api/bookings`, {
-      headers: getHeaders()
+  bookings
+    .filter(b => b.date === today)
+    .slice(0, 6)
+    .forEach(b => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${b.name}</td>
+          <td>${b.date}</td>
+          <td>${b.time}</td>
+          <td>${b.seats}</td>
+          <td>${b.status || "Pending"}</td>
+        </tr>
+      `;
     });
-
-    const data = await res.json();
-    currentBookings = data;
-
-    renderBookings(data);
-  } catch {
-    tbody.innerHTML = 'Failed to load';
-  }
 }
 
-function renderBookings(bookings) {
-  const tbody = document.getElementById('bookings-table-tbody');
-  if (!tbody) return;
+// =====================
+// CHART
+// =====================
+function renderChart(bookings) {
+  const ctx = document.getElementById("payment-breakdown-chart");
+  if (!ctx) return;
 
-  tbody.innerHTML = '';
+  const paid = bookings.filter(b => b.paymentStatus === "paid").length;
+  const unpaid = bookings.length - paid;
 
-  bookings.forEach(b => {
-    const row = document.createElement('tr');
-
-    row.innerHTML = `
-      <td>${b.name}</td>
-      <td>${b.date}</td>
-      <td>${b.seats}</td>
-      <td>${b.status}</td>
-    `;
-
-    tbody.appendChild(row);
+  new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: ["Paid", "Unpaid"],
+      datasets: [{
+        data: [paid, unpaid]
+      }]
+    }
   });
 }
 
 // =====================
-// MENU (SAFE VERSION)
+// BOOKINGS TABLE
 // =====================
-async function loadMenuTable() {
-  const tbody = document.getElementById('menu-table-tbody');
-  if (!tbody) return;
-
-  tbody.innerHTML = 'Loading...';
-
+async function loadBookingsTable(filter = "all") {
   try {
-    const res = await safeFetch(`${API_BASE}/api/menu`);
+    const res = await fetch(`${API_BASE}/api/bookings`);
+    let bookings = await res.json();
+
+    const today = new Date().toISOString().split("T")[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+
+    if (filter === "today") {
+      bookings = bookings.filter(b => b.date === today);
+    } else if (filter === "tomorrow") {
+      bookings = bookings.filter(b => b.date === tomorrow);
+    }
+
+    const tbody = document.getElementById("bookings-table-tbody");
+    tbody.innerHTML = "";
+
+    bookings.forEach(b => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${b.name}</td>
+          <td>${b.contact || "-"}</td>
+          <td>${b.date}</td>
+          <td>${b.time}</td>
+          <td>${b.seats}</td>
+          <td>${b.paymentMethod || "-"}</td>
+          <td>${b.paymentStatus || "pending"}</td>
+          <td>${b.status || "pending"}</td>
+          <td><button onclick="deleteBooking('${b._id}')">Delete</button></td>
+        </tr>
+      `;
+    });
+  } catch (err) {
+    console.error("Booking load error:", err);
+  }
+}
+
+// =====================
+// MENU
+// =====================
+async function loadMenuItems() {
+  try {
+    const res = await fetch(`${API_BASE}/api/menu`);
     const items = await res.json();
 
-    tbody.innerHTML = '';
+    const tbody = document.getElementById("menu-table-tbody");
+    tbody.innerHTML = "";
 
     items.forEach(item => {
-      const row = document.createElement('tr');
-
-      row.innerHTML = `
-        <td>${item.name}</td>
-        <td>${item.category}</td>
-        <td>Rs ${item.price}</td>
+      tbody.innerHTML += `
+        <tr>
+          <td><img src="${API_BASE}${item.image}" width="50"/></td>
+          <td>${item.name}</td>
+          <td>${item.category}</td>
+          <td>Rs ${item.price}</td>
+          <td>${item.available ? "Yes" : "No"}</td>
+          <td>
+            <button onclick="deleteMenu('${item._id}')">Delete</button>
+          </td>
+        </tr>
       `;
-
-      tbody.appendChild(row);
     });
-
-  } catch {
-    tbody.innerHTML = 'Error loading menu';
+  } catch (err) {
+    console.error(err);
   }
 }
 
 // =====================
 // GALLERY
 // =====================
-async function loadGalleryManager() {
-  const container = document.getElementById('gallery-manager-grid');
-  if (!container) return;
-
-  container.innerHTML = 'Loading...';
-
+async function loadGallery() {
   try {
-    const res = await safeFetch(`${API_BASE}/api/gallery`);
+    const res = await fetch(`${API_BASE}/api/gallery`);
     const images = await res.json();
 
-    container.innerHTML = '';
+    const grid = document.getElementById("gallery-manager-grid");
+    grid.innerHTML = "";
 
     images.forEach(img => {
-      const div = document.createElement('div');
-
-      div.innerHTML = `
-        <img src="${img.url}" style="width:100%">
+      grid.innerHTML += `
+        <div>
+          <img src="${API_BASE}${img.image}" width="100%">
+        </div>
       `;
-
-      container.appendChild(div);
     });
-
-  } catch {
-    container.innerHTML = 'Error loading gallery';
+  } catch (err) {
+    console.error(err);
   }
 }
 
 // =====================
-// SESSION HANDLER
+// REVIEWS
 // =====================
-function handleSessionExpired() {
-  localStorage.clear();
-  showToast('Session expired', 'error');
-  setTimeout(() => {
-    window.location.href = '/admin/login';
-  }, 1000);
+async function loadReviews() {
+  try {
+    const res = await fetch(`${API_BASE}/api/reviews`);
+    const reviews = await res.json();
+
+    const tbody = document.getElementById("reviews-moderation-tbody");
+    tbody.innerHTML = "";
+
+    reviews.forEach(r => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${r.name}</td>
+          <td>${r.rating}</td>
+          <td>${r.comment}</td>
+          <td>${r.status}</td>
+          <td>
+            <button onclick="approveReview('${r._id}')">Approve</button>
+          </td>
+        </tr>
+      `;
+    });
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 // =====================
-// MODALS (SAFE)
+// TABS
 // =====================
-function initModalTriggers() {
-  document.querySelectorAll('[data-modal-target]').forEach(btn => {
-    btn.onclick = () => {
-      const m = document.getElementById(btn.dataset.modalTarget);
-      if (m) m.classList.add('active');
-    };
-  });
+function setupTabs() {
+  document.querySelectorAll(".sidebar-item").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".dashboard-tab-panel")
+        .forEach(p => p.classList.remove("active"));
 
-  document.querySelectorAll('.modal-close').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('.modal').forEach(m => {
-        m.classList.remove('active');
-      });
-    };
+      const target = tab.getAttribute("data-tab");
+      document.getElementById(target).classList.add("active");
+    });
   });
 }
 
 // =====================
-// GLOBAL ERROR SAFETY
+// LOGOUT
 // =====================
-window.addEventListener('unhandledrejection', e => {
-  console.error('Unhandled:', e.reason);
-});
+function setupLogout() {
+  const btn = document.getElementById("admin-logout-btn");
+
+  if (btn) {
+    btn.addEventListener("click", () => {
+      localStorage.removeItem("adminToken");
+      window.location.href = "/admin/login";
+    });
+  }
+}
 
 // =====================
-// INIT
+// DELETE HELPERS (basic)
 // =====================
-document.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
-  initLoginPage();
-  initDashboardTabs();
-  initModalTriggers();
+async function deleteBooking(id) {
+  await fetch(`${API_BASE}/api/bookings/${id}`, { method: "DELETE" });
+  loadBookingsTable("today");
+  initDashboard();
+}
 
-  const defaultTab = document.querySelector('.sidebar-item.active');
-  if (defaultTab) onTabActivated(defaultTab.dataset.tab);
-});
-window.loadBookingsTable = loadBookingsTable;
-window.queryCustomBookingRange = queryCustomBookingRange;
+async function deleteMenu(id) {
+  await fetch(`${API_BASE}/api/menu/${id}`, { method: "DELETE" });
+  loadMenuItems();
+}
+
+async function approveReview(id) {
+  await fetch(`${API_BASE}/api/reviews/${id}/approve`, {
+    method: "PUT"
+  });
+
+  loadReviews();
+}
