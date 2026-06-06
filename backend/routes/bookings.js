@@ -34,18 +34,15 @@ async function sendEmailConfirmation(booking) {
       return;
     }
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.EMAIL_PORT || 587),
-      secure: false,
-      auth: {
-        user: emailUser,
-        pass: emailPass
-      },
-      tls: {
-        rejectUnauthorized: false
-      }
-    });
+   const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.EMAIL_PORT || 465),
+  secure: true,
+  auth: {
+    user: emailUser,
+    pass: emailPass
+  }
+});
 
     const mailOptions = {
       from: `"The Secret Garden" <${emailUser}>`,
