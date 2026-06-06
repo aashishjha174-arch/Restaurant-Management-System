@@ -2,6 +2,13 @@
 
 const API_BASE = 'https://restaurant-management-system-r5mg.onrender.com';
 
+// Resolve relative /uploads/ paths to full backend URL
+function resolveImageUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('/uploads/')) return `${API_BASE}${url}`;
+  return url;
+}
+
 // Global state
 let currentBookings = [];
 let chartInstance = null;
@@ -335,7 +342,7 @@ async function loadMenuTable() {
       row.innerHTML = `
         <td style="width: 70px;">
           ${item.image
-            ? `<img src="${item.image}" style="width:50px; height:50px; object-fit:cover; border-radius:6px; border:1px solid var(--secondary);">`
+            ? `<img src="${resolveImageUrl(item.image)}" style="width:50px; height:50px; object-fit:cover; border-radius:6px; border:1px solid var(--secondary);">`
             : `<div style="width:50px; height:50px; background:#e6dfd3; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:var(--primary); font-weight:600;">No Pic</div>`
           }
         </td>
@@ -515,7 +522,7 @@ async function loadGalleryManager() {
       card.className = 'gallery-item';
       card.style.position = 'relative';
       card.innerHTML = `
-        <img src="${img.url}" style="height:150px; object-fit:cover; width:100%;" onerror="this.style.display='none'">
+        <img src="${resolveImageUrl(img.url)}" style="height:150px; object-fit:cover; width:100%;" onerror="this.style.display='none'">
         <div style="padding:10px; font-size:0.8rem; font-weight:500;">${img.caption || 'No caption'}</div>
         <button onclick="deleteGalleryPhoto('${img._id}')" class="btn" style="position:absolute; top:10px; right:10px; background-color: var(--red); color: white; padding: 4px 8px; border-radius:4px; font-size:0.7rem;">Delete</button>
       `;

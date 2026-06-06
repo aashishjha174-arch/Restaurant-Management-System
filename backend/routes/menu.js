@@ -52,7 +52,7 @@ const withTimeout = (promise, ms = 5000) =>
     )
   ]);
 
-const BACKEND_URL = process.env.BACKEND_URL || 'https://restaurant-management-system-r5mg.onrender.com';
+
 
 // 1. GET all menu items
 router.get('/', async (req, res) => {
@@ -79,7 +79,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
 
     let imagePath = '';
     if (req.file) {
-      imagePath = `${BACKEND_URL}/uploads/${req.file.filename}`;
+      imagePath = `/uploads/${req.file.filename}`;
     }
 
     const newItem = new MenuItem({
@@ -122,7 +122,7 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
 
     if (req.file) {
       if (item.image) deleteLocalFile(item.image);
-      updateData.image = `${BACKEND_URL}/uploads/${req.file.filename}`;
+      updateData.image = `/uploads/${req.file.filename}`;
     }
 
     const updatedItem = await withTimeout(

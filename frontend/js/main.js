@@ -1,6 +1,14 @@
 // Main client script for The Secret Garden by Phat Kath
 
 window.API_BASE = 'https://restaurant-management-system-r5mg.onrender.com';
+
+// Resolve image URLs: if stored as relative /uploads/ path, prepend backend URL
+function resolveImageUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('/uploads/')) return `${API_BASE}${url}`;
+  return url; // already a full URL
+}
+
 // Global notification system
 function showToast(message, type = 'success') {
   let toastContainer = document.getElementById('toast-notification');
@@ -206,7 +214,7 @@ function renderMenuItems(items) {
     
     let imageHTML = '';
     if (item.image) {
-      imageHTML = `<img src="${item.image}" alt="${item.name}" loading="lazy">`;
+      imageHTML = `<img src="${resolveImageUrl(item.image)}" alt="${item.name}" loading="lazy">`;
     } else {
       const initials = item.name.split(' ').map(n => n[0]).join('').slice(0, 2);
       imageHTML = `<div class="menu-placeholder-img">${initials}</div>`;
@@ -255,12 +263,12 @@ async function initGalleryPage() {
       const item = document.createElement('div');
       item.className = 'gallery-item';
       item.innerHTML = `
-        <img src="${img.url}" alt="${img.caption || 'The Secret Garden'}" loading="lazy">
+        <img src="${resolveImageUrl(img.url)}" alt="${img.caption || 'The Secret Garden'}" loading="lazy">
         ${img.caption ? `<div class="gallery-caption">${img.caption}</div>` : ''}
       `;
       
       item.addEventListener('click', () => {
-        lightboxImg.src = img.url;
+        lightboxImg.src = resolveImageUrl(img.url);
         lightboxCap.textContent = img.caption || 'The Secret Garden';
         lightbox.classList.add('active');
         document.body.style.overflow = 'hidden';
