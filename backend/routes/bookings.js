@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const Booking = require('../models/Booking');
 const authMiddleware = require('../middleware/auth');
-const { Resend } = require('resend');
+const brevo = require('@getbrevo/brevo');
 
 const MAX_SEATS_PER_SLOT = 50;
 
@@ -24,49 +24,92 @@ function generateBookingId() {
   return result;
 }
 
+const apiInstance = new brevo.TransactionalEmailsApi();
+apiInstance.setApiKey(
+  brevo.TransactionalEmailsApiApiKeys.apiKey,
+  process.env.BREVO_API_KEY
+);
+
 async function sendEmailConfirmation(booking) {
   try {
-    if (!process.env.RESEND_API_KEY) {
+    if (!process.env.BREVO_API_KEY) {
       console.log(`[SIMULATED EMAIL TO ${booking.email}] bookingId: ${booking.bookingId}`);
       return;
     }
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    const { data, error } = await resend.emails.send({
-      from: 'The Secret Garden <onboarding@resend.dev>',
-      to: booking.email,
+    const emailData = {
+      sender: {
+        name: 'The Secret Garden',
+        email: 'phatkathrestaurant@gmail.com'
+      },
+      to: [
+        {
+          email: booking.email,
+          name: booking.name
+        }
+      ],
       subject: `Booking Confirmed: ${booking.bookingId} 🌿`,
-      html: `
-        <div style="font-family: Arial; padding:20px; background:#f5f0e8; color:#0d1f17;">
-          <h2 style="color:#1a3a2a;">The Secret Garden by Phat Kath</h2>
-          <p>Hi <b>${booking.name}</b>,</p>
-          <p>Your booking is confirmed ✨</p>
-          <ul>
-            <li><b>Booking ID:</b> ${booking.bookingId}</li>
-            <li><b>Date:</b> ${booking.date}</li>
-            <li><b>Time:</b> ${booking.time}</li>
-            <li><b>Seats:</b> ${booking.seats}</li>
-            <li><b>Payment:</b> ${booking.paymentMethod}</li>
-            <li><b>Status:</b> ${booking.paymentStatus}</li>
-          </ul>
-          <p>We can't wait to host you 🌿</p>
-          <p style="font-size:0.85em; color:#555;">Jogin Pakha Marg, Kathmandu 44600 | 982-3002449</p>
+      htmlContent: `
+        <div style="font-family: Arial, sans-serif; background-color: #f5f0e8; padding: 30px; color: #0d1f17; border-radius: 8px; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1a3a2a; border-bottom: 2px solid #c9a84c; padding-bottom: 10px;">
+            The Secret Garden by Phat Kath 🌿
+          </h2>
+
+          <p>Dear <strong>${booking.name}</strong>,</p>
+          <p>Your table reservation is confirmed! We look forward to welcoming you.</p>
+
+          <table style="width: 100%; max-width: 400px; border-collapse: collapse; margin: 20px 0;">
+            <tr>
+              <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #c9a84c;">Booking ID:</td>
+              <td style="padding: 10px 0; color: #c9a84c; font-weight: bold; border-bottom: 1px solid #c9a84c;">${booking.bookingId}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Date:</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.date}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Time Slot:</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.time}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Seats:</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.seats}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Payment Method:</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.paymentMethod}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Payment Status:</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.paymentStatus}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; font-weight: bold;">Special Requests:</td>
+              <td style="padding: 10px 0;">${booking.specialRequests || 'None'}</td>
+            </tr>
+          </table>
+
+          <div style="background-color: #1a3a2a; color: #f5f0e8; padding: 15px; border-radius: 6px; margin-top: 20px;">
+            <p style="margin: 0;">Need to change or cancel? Call us at <strong>982-3002449</strong></p>
+            <p style="margin: 5px 0 0 0; font-size: 0.85em;">Jogin Pakha Marg, Kathmandu 44600</p>
+          </div>
+
+          <p style="margin-top: 20px; color: #555; font-size: 0.85em;">
+            We can't wait to host you at The Secret Garden! 🌿
+          </p>
         </div>
       `
-    });
+    };
 
-    if (error) {
-      console.error('❌ Email failed:', error);
-    } else {
-      console.log('✅ Email sent:', data.id);
-    }
+    const response = await apiInstance.sendTransacEmail(emailData);
+    console.log('✅ Email sent via Brevo:', response.messageId || 'success');
 
   } catch (err) {
-    console.error('❌ Email error:', err.message);
+    console.error('❌ Email failed:', err.message);
   }
 }
 
+// 1. PUBLIC: Get availability
 router.get('/availability', async (req, res) => {
   try {
     const { date } = req.query;
@@ -89,6 +132,7 @@ router.get('/availability', async (req, res) => {
   }
 });
 
+// 2. PUBLIC: Create booking
 router.post('/', async (req, res) => {
   try {
     const { name, email, phone, date, time, seats, specialRequests, paymentMethod } = req.body;
@@ -139,6 +183,7 @@ router.post('/', async (req, res) => {
   }
 });
 
+// 3. ADMIN: Get all bookings
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const { filter, startDate, endDate } = req.query;
@@ -166,6 +211,7 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
+// 4. ADMIN: Update booking
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const booking = await Booking.findByIdAndUpdate(
@@ -178,6 +224,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// 5. ADMIN: Delete booking
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     await Booking.findByIdAndDelete(req.params.id);
