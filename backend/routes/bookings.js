@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const Booking = require('../models/Booking');
 const authMiddleware = require('../middleware/auth');
-const brevo = require('@getbrevo/brevo');
+const SibApiV3Sdk = require('sib-api-v3-sdk');
 
 const MAX_SEATS_PER_SLOT = 50;
 
@@ -24,11 +24,11 @@ function generateBookingId() {
   return result;
 }
 
-const apiInstance = new brevo.TransactionalEmailsApi();
-apiInstance.setApiKey(
-  brevo.TransactionalEmailsApiApiKeys.apiKey,
-  process.env.BREVO_API_KEY
-);
+// Brevo setup
+const defaultClient = SibApiV3Sdk.ApiClient.instance;
+const apiKey = defaultClient.authentications['api-key'];
+apiKey.apiKey = process.env.BREVO_API_KEY;
+const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
 async function sendEmailConfirmation(booking) {
   try {
@@ -37,69 +37,56 @@ async function sendEmailConfirmation(booking) {
       return;
     }
 
-    const emailData = {
-      sender: {
-        name: 'The Secret Garden',
-        email: 'phatkathrestaurant@gmail.com'
-      },
-      to: [
-        {
-          email: booking.email,
-          name: booking.name
-        }
-      ],
-      subject: `Booking Confirmed: ${booking.bookingId} 🌿`,
-      htmlContent: `
-        <div style="font-family: Arial, sans-serif; background-color: #f5f0e8; padding: 30px; color: #0d1f17; border-radius: 8px; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #1a3a2a; border-bottom: 2px solid #c9a84c; padding-bottom: 10px;">
-            The Secret Garden by Phat Kath 🌿
-          </h2>
-
-          <p>Dear <strong>${booking.name}</strong>,</p>
-          <p>Your table reservation is confirmed! We look forward to welcoming you.</p>
-
-          <table style="width: 100%; max-width: 400px; border-collapse: collapse; margin: 20px 0;">
-            <tr>
-              <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #c9a84c;">Booking ID:</td>
-              <td style="padding: 10px 0; color: #c9a84c; font-weight: bold; border-bottom: 1px solid #c9a84c;">${booking.bookingId}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Date:</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.date}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Time Slot:</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.time}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Seats:</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.seats}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Payment Method:</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.paymentMethod}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Payment Status:</td>
-              <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.paymentStatus}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; font-weight: bold;">Special Requests:</td>
-              <td style="padding: 10px 0;">${booking.specialRequests || 'None'}</td>
-            </tr>
-          </table>
-
-          <div style="background-color: #1a3a2a; color: #f5f0e8; padding: 15px; border-radius: 6px; margin-top: 20px;">
-            <p style="margin: 0;">Need to change or cancel? Call us at <strong>982-3002449</strong></p>
-            <p style="margin: 5px 0 0 0; font-size: 0.85em;">Jogin Pakha Marg, Kathmandu 44600</p>
-          </div>
-
-          <p style="margin-top: 20px; color: #555; font-size: 0.85em;">
-            We can't wait to host you at The Secret Garden! 🌿
-          </p>
+    const emailData = new SibApiV3Sdk.SendSmtpEmail();
+    emailData.sender = { name: 'The Secret Garden', email: 'phatkathrestaurant@gmail.com' };
+    emailData.to = [{ email: booking.email, name: booking.name }];
+    emailData.subject = `Booking Confirmed: ${booking.bookingId} 🌿`;
+    emailData.htmlContent = `
+      <div style="font-family: Arial, sans-serif; background-color: #f5f0e8; padding: 30px; color: #0d1f17; border-radius: 8px; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1a3a2a; border-bottom: 2px solid #c9a84c; padding-bottom: 10px;">
+          The Secret Garden by Phat Kath 🌿
+        </h2>
+        <p>Dear <strong>${booking.name}</strong>,</p>
+        <p>Your table reservation is confirmed! We look forward to welcoming you.</p>
+        <table style="width: 100%; max-width: 400px; border-collapse: collapse; margin: 20px 0;">
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #c9a84c;">Booking ID:</td>
+            <td style="padding: 10px 0; color: #c9a84c; font-weight: bold; border-bottom: 1px solid #c9a84c;">${booking.bookingId}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Date:</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.date}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Time Slot:</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.time}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Seats:</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.seats}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Payment Method:</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.paymentMethod}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Payment Status:</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid #e0d8cc;">${booking.paymentStatus}</td>
+          </tr>
+          <tr>
+            <td style="padding: 10px 0; font-weight: bold;">Special Requests:</td>
+            <td style="padding: 10px 0;">${booking.specialRequests || 'None'}</td>
+          </tr>
+        </table>
+        <div style="background-color: #1a3a2a; color: #f5f0e8; padding: 15px; border-radius: 6px; margin-top: 20px;">
+          <p style="margin: 0;">Need to change or cancel? Call us at <strong>982-3002449</strong></p>
+          <p style="margin: 5px 0 0 0; font-size: 0.85em;">Jogin Pakha Marg, Kathmandu 44600</p>
         </div>
-      `
-    };
+        <p style="margin-top: 20px; color: #555; font-size: 0.85em;">
+          We can't wait to host you at The Secret Garden! 🌿
+        </p>
+      </div>
+    `;
 
     const response = await apiInstance.sendTransacEmail(emailData);
     console.log('✅ Email sent via Brevo:', response.messageId || 'success');
