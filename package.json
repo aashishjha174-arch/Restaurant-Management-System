@@ -8,6 +8,7 @@
     "seed": "node backend/seed.js"
   },
   "dependencies": {
+    "@getbrevo/brevo": "^5.0.4",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.41.3",
     "cors": "^2.8.5",

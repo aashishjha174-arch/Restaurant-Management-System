@@ -15,6 +15,8 @@ const TIME_SLOTS = [
   '09:00 PM - 11:00 PM'
 ];
 
+/* ---------------- BOOKING ID ---------------- */
+
 function generateBookingId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = 'SG-';
@@ -24,22 +26,33 @@ function generateBookingId() {
   return result;
 }
 
-/* ---------------- EMAIL SETUP (BREVO SMTP) ---------------- */
+/* ---------------- EMAIL SETUP (BREVO SMTP FIXED) ---------------- */
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_SERVER,
-  port: 465,
-  secure: true, // IMPORTANT
+  port: Number(process.env.SMTP_PORT || 587),
+  secure: Number(process.env.SMTP_PORT) === 465,
   auth: {
     user: process.env.SMTP_LOGIN,
     pass: process.env.SMTP_KEY
   }
 });
 
+/* ---------------- VERIFY CONNECTION ON START ---------------- */
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ SMTP connection failed:", error.message);
+  } else {
+    console.log("✅ SMTP ready to send emails");
+  }
+});
+
+/* ---------------- SEND EMAIL ---------------- */
+
 async function sendEmailConfirmation(booking) {
   try {
     const info = await transporter.sendMail({
-      from: "The Secret Garden <a2a0b8001@smtp-brevo.com>",
+      from: `"The Secret Garden" <${process.env.SMTP_LOGIN}>`,
       to: booking.email,
       subject: `Booking Confirmed: ${booking.bookingId} 🌿`,
       html: `
@@ -64,12 +77,10 @@ async function sendEmailConfirmation(booking) {
       `
     });
 
-    console.log("✅ Email sent successfully");
-    console.log("Message ID:", info.messageId);
-
+    console.log("📩 Email sent:", info.messageId);
   } catch (error) {
     console.error("❌ EMAIL FAILED:");
-    console.error(error);
+    console.error(error.message);
   }
 }
 
@@ -100,7 +111,7 @@ router.get('/availability', async (req, res) => {
     res.json({ date, slots: slotAvailability });
 
   } catch (error) {
-    console.error('Check Availability Error:', error);
+    console.error('Availability Error:', error);
     res.status(500).json({ message: 'Error checking availability' });
   }
 });
@@ -153,7 +164,7 @@ router.post('/', async (req, res) => {
 
     await newBooking.save();
 
-    // send email in background (don’t block response)
+    /* IMPORTANT: don't block response */
     sendEmailConfirmation(newBooking);
 
     res.status(201).json({
