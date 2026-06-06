@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const Booking = require('../models/Booking');
 const authMiddleware = require('../middleware/auth');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const MAX_SEATS_PER_SLOT = 50;
 
@@ -26,26 +26,15 @@ function generateBookingId() {
 
 async function sendEmailConfirmation(booking) {
   try {
-    const emailUser = process.env.EMAIL_USER || process.env.SMTP_USER;
-    const emailPass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
-
-    if (!emailUser || !emailPass) {
+    if (!process.env.RESEND_API_KEY) {
       console.log(`[SIMULATED EMAIL TO ${booking.email}] bookingId: ${booking.bookingId}`);
       return;
     }
 
-   const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.EMAIL_PORT || 465),
-  secure: true,
-  auth: {
-    user: emailUser,
-    pass: emailPass
-  }
-});
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
-    const mailOptions = {
-      from: `"The Secret Garden" <${emailUser}>`,
+    await resend.emails.send({
+      from: 'The Secret Garden <onboarding@resend.dev>',
       to: booking.email,
       subject: `Booking Confirmed: ${booking.bookingId} - The Secret Garden`,
       html: `
@@ -55,7 +44,6 @@ async function sendEmailConfirmation(booking) {
           </h2>
           <p>Dear <strong>${booking.name}</strong>,</p>
           <p>Thank you for booking a table with us! Your reservation is confirmed.</p>
-
           <table style="width: 100%; max-width: 400px; border-collapse: collapse; margin: 20px 0;">
             <tr>
               <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #c9a84c;">Booking ID:</td>
@@ -82,22 +70,18 @@ async function sendEmailConfirmation(booking) {
               <td style="padding: 8px 0; border-bottom: 1px solid #e0d8cc;">${booking.paymentStatus}</td>
             </tr>
           </table>
-
           <p><strong>Special Requests:</strong> ${booking.specialRequests || 'None'}</p>
-
           <div style="background-color: #1a3a2a; color: #f5f0e8; padding: 15px; border-radius: 6px; margin-top: 20px;">
             <p style="margin: 0;">Need to change or cancel? Call us at <strong>982-3002449</strong></p>
             <p style="margin: 5px 0 0 0; font-size: 0.85em;">Jogin Pakha Marg, Kathmandu 44600</p>
           </div>
-
           <p style="margin-top: 20px; color: #555; font-size: 0.85em;">
             We look forward to welcoming you to The Secret Garden! 🌿
           </p>
         </div>
       `
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
     console.log(`✅ Email sent successfully to ${booking.email}`);
   } catch (error) {
     console.error('❌ Email sending failed:', error.message);
@@ -180,7 +164,7 @@ router.post('/', async (req, res) => {
 
     await newBooking.save();
 
-    // Send email in background — don't await so it doesn't slow response
+    // Send email in background
     sendEmailConfirmation(newBooking).catch(err => console.error('Email bg error:', err));
 
     res.status(201).json({
