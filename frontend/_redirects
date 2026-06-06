@@ -4,3 +4,5 @@
 /gallery   /pages/gallery.html   200
 /reviews   /pages/reviews.html   200
 /contact   /pages/contact.html   200
+/admin/login       /admin/login.html       200
+/admin/dashboard   /admin/dashboard.html   200

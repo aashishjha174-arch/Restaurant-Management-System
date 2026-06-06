@@ -15,7 +15,6 @@ const TIME_SLOTS = [
   '09:00 PM - 11:00 PM'
 ];
 
-// Helper to generate a unique Booking ID
 function generateBookingId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = 'SG-';
@@ -25,68 +24,86 @@ function generateBookingId() {
   return result;
 }
 
-// Helper to send booking confirmation email
 async function sendEmailConfirmation(booking) {
   try {
+    const emailUser = process.env.EMAIL_USER || process.env.SMTP_USER;
+    const emailPass = process.env.EMAIL_PASS || process.env.SMTP_PASS;
+
+    if (!emailUser || !emailPass) {
+      console.log(`[SIMULATED EMAIL TO ${booking.email}] bookingId: ${booking.bookingId}`);
+      return;
+    }
+
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST || process.env.SMTP_HOST || 'smtp.ethereal.email',
-      port: parseInt(process.env.EMAIL_PORT || process.env.SMTP_PORT || 587),
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.EMAIL_PORT || 587),
+      secure: false,
       auth: {
-        user: process.env.EMAIL_USER || process.env.SMTP_USER || '',
-        pass: process.env.EMAIL_PASS || process.env.SMTP_PASS || ''
+        user: emailUser,
+        pass: emailPass
+      },
+      tls: {
+        rejectUnauthorized: false
       }
     });
 
     const mailOptions = {
-      from: '"The Secret Garden" <bookings@secretgardenkathmandu.com>',
+      from: `"The Secret Garden" <${emailUser}>`,
       to: booking.email,
       subject: `Booking Confirmed: ${booking.bookingId} - The Secret Garden`,
       html: `
-        <div style="font-family: 'Playfair Display', 'Inter', sans-serif; background-color: #f5f0e8; padding: 30px; color: #0d1f17; border-radius: 8px;">
-          <h2 style="color: #1a3a2a; border-bottom: 2px solid #c9a84c; padding-bottom: 10px;">The Secret Garden by Phat Kath</h2>
+        <div style="font-family: Arial, sans-serif; background-color: #f5f0e8; padding: 30px; color: #0d1f17; border-radius: 8px; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1a3a2a; border-bottom: 2px solid #c9a84c; padding-bottom: 10px;">
+            The Secret Garden by Phat Kath
+          </h2>
           <p>Dear <strong>${booking.name}</strong>,</p>
-          <p>Thank you for booking a table with us. Your reservation details are as follows:</p>
+          <p>Thank you for booking a table with us! Your reservation is confirmed.</p>
+
           <table style="width: 100%; max-width: 400px; border-collapse: collapse; margin: 20px 0;">
             <tr>
-              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #1a3a2a;">Booking ID:</td>
-              <td style="padding: 8px 0; color: #c9a84c; font-weight: bold; border-bottom: 1px solid #1a3a2a;">${booking.bookingId}</td>
+              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #c9a84c;">Booking ID:</td>
+              <td style="padding: 8px 0; color: #c9a84c; font-weight: bold; border-bottom: 1px solid #c9a84c;">${booking.bookingId}</td>
             </tr>
             <tr>
-              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #1a3a2a;">Date:</td>
-              <td style="padding: 8px 0; border-bottom: 1px solid #1a3a2a;">${booking.date}</td>
+              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Date:</td>
+              <td style="padding: 8px 0; border-bottom: 1px solid #e0d8cc;">${booking.date}</td>
             </tr>
             <tr>
-              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #1a3a2a;">Time Slot:</td>
-              <td style="padding: 8px 0; border-bottom: 1px solid #1a3a2a;">${booking.time}</td>
+              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Time Slot:</td>
+              <td style="padding: 8px 0; border-bottom: 1px solid #e0d8cc;">${booking.time}</td>
             </tr>
             <tr>
-              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #1a3a2a;">Seats:</td>
-              <td style="padding: 8px 0; border-bottom: 1px solid #1a3a2a;">${booking.seats}</td>
+              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Seats:</td>
+              <td style="padding: 8px 0; border-bottom: 1px solid #e0d8cc;">${booking.seats}</td>
             </tr>
             <tr>
-              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #1a3a2a;">Payment Method:</td>
-              <td style="padding: 8px 0; border-bottom: 1px solid #1a3a2a;">${booking.paymentMethod}</td>
+              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Payment Method:</td>
+              <td style="padding: 8px 0; border-bottom: 1px solid #e0d8cc;">${booking.paymentMethod}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Payment Status:</td>
+              <td style="padding: 8px 0; border-bottom: 1px solid #e0d8cc;">${booking.paymentStatus}</td>
             </tr>
           </table>
+
           <p><strong>Special Requests:</strong> ${booking.specialRequests || 'None'}</p>
-          <p>If you need to change or cancel your booking, please call us at <strong>982-3002449</strong>.</p>
-          <br>
-          <p>We look forward to welcoming you!</p>
-          <p style="font-size: 0.9em; color: #555;">Address: Jogin Pakha Marg, Kathmandu 44600</p>
+
+          <div style="background-color: #1a3a2a; color: #f5f0e8; padding: 15px; border-radius: 6px; margin-top: 20px;">
+            <p style="margin: 0;">Need to change or cancel? Call us at <strong>982-3002449</strong></p>
+            <p style="margin: 5px 0 0 0; font-size: 0.85em;">Jogin Pakha Marg, Kathmandu 44600</p>
+          </div>
+
+          <p style="margin-top: 20px; color: #555; font-size: 0.85em;">
+            We look forward to welcoming you to The Secret Garden! 🌿
+          </p>
         </div>
       `
     };
 
-    // Only attempt to send if SMTP settings are present
-    const emailUser = process.env.EMAIL_USER || process.env.SMTP_USER;
-    if (emailUser) {
-      await transporter.sendMail(mailOptions);
-      console.log(`Email sent successfully to ${booking.email}`);
-    } else {
-      console.log(`[SIMULATED EMAIL TO ${booking.email}] bookingId: ${booking.bookingId}`);
-    }
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Email sent successfully to ${booking.email}`);
   } catch (error) {
-    console.error('Email sending failed:', error.message);
+    console.error('❌ Email sending failed:', error.message);
   }
 }
 
@@ -98,10 +115,8 @@ router.get('/availability', async (req, res) => {
       return res.status(400).json({ message: 'Date parameter is required (YYYY-MM-DD)' });
     }
 
-    // Get all bookings on this date that are not cancelled
     const bookings = await Booking.find({ date, status: { $ne: 'Cancelled' } });
 
-    // Aggregate seats by time slot
     const slotAvailability = {};
     TIME_SLOTS.forEach(slot => {
       slotAvailability[slot] = MAX_SEATS_PER_SLOT;
@@ -114,10 +129,7 @@ router.get('/availability', async (req, res) => {
       }
     });
 
-    res.json({
-      date,
-      slots: slotAvailability
-    });
+    res.json({ date, slots: slotAvailability });
   } catch (error) {
     console.error('Check Availability Error:', error);
     res.status(500).json({ message: 'Error checking availability' });
@@ -138,25 +150,21 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Invalid number of seats' });
     }
 
-    // Verify time slot is valid
     if (!TIME_SLOTS.includes(time)) {
       return res.status(400).json({ message: 'Invalid time slot selected' });
     }
 
-    // Calculate currently booked seats for this slot
     const existingBookings = await Booking.find({ date, time, status: { $ne: 'Cancelled' } });
     const bookedSeats = existingBookings.reduce((sum, b) => sum + b.seats, 0);
-
     const availableSeats = MAX_SEATS_PER_SLOT - bookedSeats;
+
     if (requestedSeats > availableSeats) {
       return res.status(400).json({
         message: `Sorry, only ${availableSeats} seats are available for this slot.`
       });
     }
 
-    // Determine default paymentStatus: Online simulates instant payment check, or starts Pending
     const paymentStatus = paymentMethod === 'Online' ? 'Paid' : 'Pending';
-
     const bookingId = generateBookingId();
 
     const newBooking = new Booking({
@@ -175,8 +183,8 @@ router.post('/', async (req, res) => {
 
     await newBooking.save();
 
-    // Send async email in background
-    sendEmailConfirmation(newBooking);
+    // Send email in background — don't await so it doesn't slow response
+    sendEmailConfirmation(newBooking).catch(err => console.error('Email bg error:', err));
 
     res.status(201).json({
       success: true,
@@ -189,15 +197,14 @@ router.post('/', async (req, res) => {
   }
 });
 
-// 3. ADMIN: Get all bookings (with date/range/status filters)
+// 3. ADMIN: Get all bookings
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const { filter, startDate, endDate } = req.query;
     let query = {};
 
-    // Get current date strings in local/server context
     const todayStr = new Date().toISOString().split('T')[0];
-    
+
     if (filter === 'today') {
       query.date = todayStr;
     } else if (filter === 'tomorrow') {
@@ -205,19 +212,14 @@ router.get('/', authMiddleware, async (req, res) => {
       tomorrow.setDate(tomorrow.getDate() + 1);
       query.date = tomorrow.toISOString().split('T')[0];
     } else if (filter === 'week') {
-      const today = new Date();
       const nextWeek = new Date();
-      nextWeek.setDate(today.getDate() + 7);
-      
+      nextWeek.setDate(nextWeek.getDate() + 7);
       query.date = {
         $gte: todayStr,
         $lte: nextWeek.toISOString().split('T')[0]
       };
     } else if (startDate && endDate) {
-      query.date = {
-        $gte: startDate,
-        $lte: endDate
-      };
+      query.date = { $gte: startDate, $lte: endDate };
     }
 
     const bookings = await Booking.find(query).sort({ date: 1, time: 1 });
@@ -228,12 +230,11 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
-// 4. ADMIN: Update Booking Status/Payment
+// 4. ADMIN: Update booking
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { status, paymentStatus } = req.body;
     const updateData = {};
-
     if (status) updateData.status = status;
     if (paymentStatus) updateData.paymentStatus = paymentStatus;
 
@@ -254,7 +255,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// 5. ADMIN: Delete Booking
+// 5. ADMIN: Delete booking
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const booking = await Booking.findByIdAndDelete(req.params.id);

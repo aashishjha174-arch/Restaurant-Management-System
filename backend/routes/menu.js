@@ -5,18 +5,12 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// -------------------------
-// Uploads setup
-// -------------------------
 const uploadsDir = path.join(__dirname, '../uploads');
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// -------------------------
-// Multer config
-// -------------------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadsDir);
@@ -33,22 +27,16 @@ const upload = multer({
     const allowed = /jpeg|jpg|png|webp|gif/;
     const ext = allowed.test(path.extname(file.originalname).toLowerCase());
     const mime = allowed.test(file.mimetype);
-
     if (ext && mime) cb(null, true);
     else cb(new Error('Only image files allowed'));
   },
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-// -------------------------
-// Helper: delete file safely
-// -------------------------
 function deleteLocalFile(imagePath) {
   if (!imagePath) return;
-
   const fileName = path.basename(imagePath);
   const fullPath = path.join(uploadsDir, fileName);
-
   if (fs.existsSync(fullPath)) {
     fs.unlink(fullPath, (err) => {
       if (err) console.error('File delete error:', err.message);
@@ -56,9 +44,6 @@ function deleteLocalFile(imagePath) {
   }
 }
 
-// -------------------------
-// Helper: timeout wrapper
-// -------------------------
 const withTimeout = (promise, ms = 5000) =>
   Promise.race([
     promise,
@@ -67,16 +52,15 @@ const withTimeout = (promise, ms = 5000) =>
     )
   ]);
 
-// -------------------------
+const BACKEND_URL = process.env.BACKEND_URL || 'https://restaurant-management-system-r5mg.onrender.com';
+
 // 1. GET all menu items
-// -------------------------
 router.get('/', async (req, res) => {
   try {
     const menuItems = await withTimeout(
       MenuItem.find({}).sort({ category: 1, order: 1 }),
       5000
     );
-
     res.json(menuItems);
   } catch (error) {
     console.error('Fetch Menu Error:', error.message);
@@ -84,9 +68,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// -------------------------
 // 2. ADD menu item
-// -------------------------
 router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   try {
     const { name, description, price, category, available, order } = req.body;
@@ -97,7 +79,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
 
     let imagePath = '';
     if (req.file) {
-      imagePath = `/uploads/${req.file.filename}`;
+      imagePath = `${BACKEND_URL}/uploads/${req.file.filename}`;
     }
 
     const newItem = new MenuItem({
@@ -111,7 +93,6 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
     });
 
     const savedItem = await withTimeout(newItem.save(), 5000);
-
     res.status(201).json({ success: true, item: savedItem });
   } catch (error) {
     console.error('Add Menu Error:', error.message);
@@ -119,17 +100,12 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
   }
 });
 
-// -------------------------
 // 3. UPDATE menu item
-// -------------------------
 router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
   try {
     const { name, description, price, category, available, order } = req.body;
 
-    const item = await withTimeout(
-      MenuItem.findById(req.params.id),
-      5000
-    );
+    const item = await withTimeout(MenuItem.findById(req.params.id), 5000);
 
     if (!item) {
       return res.status(404).json({ message: 'Menu item not found' });
@@ -145,10 +121,8 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
     };
 
     if (req.file) {
-      if (item.image) {
-        deleteLocalFile(item.image);
-      }
-      updateData.image = `/uploads/${req.file.filename}`;
+      if (item.image) deleteLocalFile(item.image);
+      updateData.image = `${BACKEND_URL}/uploads/${req.file.filename}`;
     }
 
     const updatedItem = await withTimeout(
@@ -163,9 +137,7 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req, res) => {
   }
 });
 
-// -------------------------
 // 4. REORDER items
-// -------------------------
 router.put('/reorder/batch', authMiddleware, async (req, res) => {
   try {
     const { items } = req.body;
@@ -177,20 +149,11 @@ router.put('/reorder/batch', authMiddleware, async (req, res) => {
     const bulkOps = items.map(item => ({
       updateOne: {
         filter: { _id: item.id },
-        update: {
-          $set: {
-            order: item.order,
-            category: item.category
-          }
-        }
+        update: { $set: { order: item.order, category: item.category } }
       }
     }));
 
-    await withTimeout(
-      MenuItem.bulkWrite(bulkOps),
-      5000
-    );
-
+    await withTimeout(MenuItem.bulkWrite(bulkOps), 5000);
     res.json({ success: true, message: 'Menu reordered successfully' });
   } catch (error) {
     console.error('Reorder Error:', error.message);
@@ -198,29 +161,18 @@ router.put('/reorder/batch', authMiddleware, async (req, res) => {
   }
 });
 
-// -------------------------
 // 5. DELETE item
-// -------------------------
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
-    const item = await withTimeout(
-      MenuItem.findById(req.params.id),
-      5000
-    );
+    const item = await withTimeout(MenuItem.findById(req.params.id), 5000);
 
     if (!item) {
       return res.status(404).json({ message: 'Menu item not found' });
     }
 
-    if (item.image) {
-      deleteLocalFile(item.image);
-    }
+    if (item.image) deleteLocalFile(item.image);
 
-    await withTimeout(
-      MenuItem.findByIdAndDelete(req.params.id),
-      5000
-    );
-
+    await withTimeout(MenuItem.findByIdAndDelete(req.params.id), 5000);
     res.json({ success: true, message: 'Deleted successfully' });
   } catch (error) {
     console.error('Delete Error:', error.message);

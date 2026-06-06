@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | The Secret Garden</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="../../css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body style="margin: 0; padding: 0; background-color: #f0eae1;">
@@ -467,26 +467,21 @@
       </form>
     </div>
   </div>
-<script>
-  window.loadBookingsTable = loadBookingsTable;
-</script>
+
   <!-- Scripts -->
  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="/js/main.js"></script>
-<script src="/js/admin.js"></script>
-  <script>
-    // Inline helper to query custom date range for bookings
-    function queryCustomBookingRange() {
-      const start = document.getElementById('booking-filter-start').value;
-      const end = document.getElementById('booking-filter-end').value;
-      if (!start || !end) {
-        window.showToast = window.showToast || function(msg) {
-  alert(msg);
-};
-        return;
-      }
-      loadBookingsTable(`range&startDate=${start}&endDate=${end}`);
+<script src="../../js/main.js"></script>
+<script src="../../js/admin.js"></script>
+<script>
+  function queryCustomBookingRange() {
+    const start = document.getElementById('booking-filter-start').value;
+    const end = document.getElementById('booking-filter-end').value;
+    if (!start || !end) {
+      showToast('Please select both start and end dates.', 'error');
+      return;
     }
-  </script>
+    loadBookingsTable(`range&startDate=${start}&endDate=${end}`);
+  }
+</script>
 </body>
 </html>
