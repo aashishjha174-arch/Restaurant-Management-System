@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const Booking = require('../models/Booking');
 const authMiddleware = require('../middleware/auth');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 const MAX_SEATS_PER_SLOT = 50;
 
@@ -24,74 +24,61 @@ function generateBookingId() {
   return result;
 }
 
+/* ---------------- EMAIL SETUP (BREVO SMTP) ---------------- */
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_SERVER,
+  port: Number(process.env.SMTP_PORT),
+  secure: false, // must be false for 587
+  auth: {
+    user: process.env.SMTP_LOGIN,
+    pass: process.env.SMTP_KEY
+  }
+});
+
 async function sendEmailConfirmation(booking) {
   try {
-    if (!process.env.RESEND_API_KEY) {
-      console.log(`[SIMULATED EMAIL TO ${booking.email}] bookingId: ${booking.bookingId}`);
-      return;
-    }
-
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    await resend.emails.send({
-      from: 'The Secret Garden <onboarding@resend.dev>',
+    const info = await transporter.sendMail({
+      from: "The Secret Garden <a2a0b8001@smtp-brevo.com>",
       to: booking.email,
-      subject: `Booking Confirmed: ${booking.bookingId} - The Secret Garden`,
+      subject: `Booking Confirmed: ${booking.bookingId} 🌿`,
       html: `
-        <div style="font-family: Arial, sans-serif; background-color: #f5f0e8; padding: 30px; color: #0d1f17; border-radius: 8px; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #1a3a2a; border-bottom: 2px solid #c9a84c; padding-bottom: 10px;">
-            The Secret Garden by Phat Kath
-          </h2>
-          <p>Dear <strong>${booking.name}</strong>,</p>
-          <p>Thank you for booking a table with us! Your reservation is confirmed.</p>
-          <table style="width: 100%; max-width: 400px; border-collapse: collapse; margin: 20px 0;">
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #c9a84c;">Booking ID:</td>
-              <td style="padding: 8px 0; color: #c9a84c; font-weight: bold; border-bottom: 1px solid #c9a84c;">${booking.bookingId}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Date:</td>
-              <td style="padding: 8px 0; border-bottom: 1px solid #e0d8cc;">${booking.date}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Time Slot:</td>
-              <td style="padding: 8px 0; border-bottom: 1px solid #e0d8cc;">${booking.time}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Seats:</td>
-              <td style="padding: 8px 0; border-bottom: 1px solid #e0d8cc;">${booking.seats}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Payment Method:</td>
-              <td style="padding: 8px 0; border-bottom: 1px solid #e0d8cc;">${booking.paymentMethod}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; border-bottom: 1px solid #e0d8cc;">Payment Status:</td>
-              <td style="padding: 8px 0; border-bottom: 1px solid #e0d8cc;">${booking.paymentStatus}</td>
-            </tr>
-          </table>
-          <p><strong>Special Requests:</strong> ${booking.specialRequests || 'None'}</p>
-          <div style="background-color: #1a3a2a; color: #f5f0e8; padding: 15px; border-radius: 6px; margin-top: 20px;">
-            <p style="margin: 0;">Need to change or cancel? Call us at <strong>982-3002449</strong></p>
-            <p style="margin: 5px 0 0 0; font-size: 0.85em;">Jogin Pakha Marg, Kathmandu 44600</p>
-          </div>
-          <p style="margin-top: 20px; color: #555; font-size: 0.85em;">
-            We look forward to welcoming you to The Secret Garden! 🌿
-          </p>
+        <div style="font-family: Arial; background:#f5f0e8; padding:20px; color:#0d1f17;">
+          <h2 style="color:#1a3a2a;">The Secret Garden</h2>
+
+          <p>Dear <b>${booking.name}</b>,</p>
+          <p>Your booking is confirmed ✨</p>
+
+          <h3>Booking Details</h3>
+          <ul>
+            <li><b>ID:</b> ${booking.bookingId}</li>
+            <li><b>Date:</b> ${booking.date}</li>
+            <li><b>Time:</b> ${booking.time}</li>
+            <li><b>Seats:</b> ${booking.seats}</li>
+            <li><b>Payment:</b> ${booking.paymentMethod}</li>
+            <li><b>Status:</b> ${booking.paymentStatus}</li>
+          </ul>
+
+          <p style="margin-top:20px;">We look forward to serving you 🌿</p>
         </div>
       `
     });
 
-    console.log(`✅ Email sent successfully to ${booking.email}`);
+    console.log("✅ Email sent successfully");
+    console.log("Message ID:", info.messageId);
+
   } catch (error) {
-    console.error('❌ Email sending failed:', error.message);
+    console.error("❌ EMAIL FAILED:");
+    console.error(error);
   }
 }
 
-// 1. PUBLIC: Get seat availability for a date
+/* ---------------- 1. AVAILABILITY ---------------- */
+
 router.get('/availability', async (req, res) => {
   try {
     const { date } = req.query;
+
     if (!date) {
       return res.status(400).json({ message: 'Date parameter is required (YYYY-MM-DD)' });
     }
@@ -111,13 +98,15 @@ router.get('/availability', async (req, res) => {
     });
 
     res.json({ date, slots: slotAvailability });
+
   } catch (error) {
     console.error('Check Availability Error:', error);
     res.status(500).json({ message: 'Error checking availability' });
   }
 });
 
-// 2. PUBLIC: Create booking
+/* ---------------- 2. CREATE BOOKING ---------------- */
+
 router.post('/', async (req, res) => {
   try {
     const { name, email, phone, date, time, seats, specialRequests, paymentMethod } = req.body;
@@ -164,21 +153,23 @@ router.post('/', async (req, res) => {
 
     await newBooking.save();
 
-    // Send email in background
-    sendEmailConfirmation(newBooking).catch(err => console.error('Email bg error:', err));
+    // send email in background (don’t block response)
+    sendEmailConfirmation(newBooking);
 
     res.status(201).json({
       success: true,
       message: 'Booking created successfully',
       booking: newBooking
     });
+
   } catch (error) {
     console.error('Create Booking Error:', error);
     res.status(500).json({ message: 'Server error creating booking' });
   }
 });
 
-// 3. ADMIN: Get all bookings
+/* ---------------- 3. ADMIN: GET BOOKINGS ---------------- */
+
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const { filter, startDate, endDate } = req.query;
@@ -205,16 +196,19 @@ router.get('/', authMiddleware, async (req, res) => {
 
     const bookings = await Booking.find(query).sort({ date: 1, time: 1 });
     res.json(bookings);
+
   } catch (error) {
     console.error('Get Bookings Error:', error);
     res.status(500).json({ message: 'Error fetching bookings' });
   }
 });
 
-// 4. ADMIN: Update booking
+/* ---------------- 4. ADMIN: UPDATE ---------------- */
+
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
     const { status, paymentStatus } = req.body;
+
     const updateData = {};
     if (status) updateData.status = status;
     if (paymentStatus) updateData.paymentStatus = paymentStatus;
@@ -230,20 +224,25 @@ router.put('/:id', authMiddleware, async (req, res) => {
     }
 
     res.json({ success: true, booking });
+
   } catch (error) {
     console.error('Update Booking Error:', error);
     res.status(500).json({ message: 'Error updating booking' });
   }
 });
 
-// 5. ADMIN: Delete booking
+/* ---------------- 5. ADMIN: DELETE ---------------- */
+
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const booking = await Booking.findByIdAndDelete(req.params.id);
+
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
+
     res.json({ success: true, message: 'Booking deleted successfully' });
+
   } catch (error) {
     console.error('Delete Booking Error:', error);
     res.status(500).json({ message: 'Error deleting booking' });
