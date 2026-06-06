@@ -2,57 +2,34 @@ const router = require('express').Router();
 const GalleryImage = require('../models/GalleryImage');
 const authMiddleware = require('../middleware/auth');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-
-const uploadsDir = path.join(__dirname, '../uploads');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 // -------------------------
-// Ensure uploads folder
+// Cloudinary config
 // -------------------------
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // -------------------------
-// Multer config
+// Multer + Cloudinary storage
 // -------------------------
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, 'gallery-' + uniqueSuffix + path.extname(file.originalname));
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'secret-garden/gallery',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+    transformation: [{ quality: 'auto', fetch_format: 'auto' }]
   }
 });
 
 const upload = multer({
   storage,
-  fileFilter: (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|webp|gif/;
-    const ext = allowed.test(path.extname(file.originalname).toLowerCase());
-    const mime = allowed.test(file.mimetype);
-
-    if (ext && mime) cb(null, true);
-    else cb(new Error('Only images are allowed'));
-  },
   limits: { fileSize: 10 * 1024 * 1024 }
 });
-
-// -------------------------
-// Helpers
-// -------------------------
-function deleteLocalFile(imagePath) {
-  if (!imagePath) return;
-
-  const fileName = path.basename(imagePath);
-  const fullPath = path.join(uploadsDir, fileName);
-
-  if (fs.existsSync(fullPath)) {
-    fs.unlink(fullPath, (err) => {
-      if (err) console.error('File delete error:', err.message);
-    });
-  }
-}
 
 // timeout wrapper
 const withTimeout = (promise, ms = 5000) =>
@@ -72,7 +49,6 @@ router.get('/', async (req, res) => {
       GalleryImage.find({}).sort({ uploadedAt: -1 }),
       5000
     );
-
     res.json(images);
   } catch (error) {
     console.error('Fetch Gallery Error:', error.message);
@@ -91,23 +67,22 @@ router.post('/', authMiddleware, upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'No image uploaded' });
     }
 
-    const imagePath = `/uploads/${req.file.filename}`;
-
+    // Cloudinary gives us req.file.path (the full secure URL)
     const newImage = new GalleryImage({
-      url: imagePath,
-      caption: caption || ''
+      url:       req.file.path,
+      publicId:  req.file.filename,
+      caption:   caption || ''
     });
 
     const saved = await withTimeout(newImage.save(), 5000);
-
     res.status(201).json({ success: true, image: saved });
 
   } catch (error) {
     console.error('Gallery Upload Error:', error.message);
 
-    // rollback file if DB fails
-    if (req.file) {
-      deleteLocalFile(`/uploads/${req.file.filename}`);
+    // Rollback: delete from Cloudinary if DB fails
+    if (req.file && req.file.filename) {
+      cloudinary.uploader.destroy(req.file.filename).catch(console.error);
     }
 
     res.status(500).json({ message: 'Error uploading image' });
@@ -128,8 +103,9 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ message: 'Image not found' });
     }
 
-    if (image.url && image.url.startsWith('/uploads/')) {
-      deleteLocalFile(image.url);
+    // Delete from Cloudinary if we have the public ID
+    if (image.publicId) {
+      await cloudinary.uploader.destroy(image.publicId).catch(console.error);
     }
 
     await withTimeout(

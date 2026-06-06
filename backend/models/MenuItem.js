@@ -22,7 +22,11 @@ const menuItemSchema = new mongoose.Schema({
     trim: true
   },
   image: {
-    type: String, // URL/Path to image file e.g., "/uploads/filename.jpg"
+    type: String, // Full Cloudinary URL
+    default: ''
+  },
+  publicId: {
+    type: String, // Cloudinary public_id for deletion
     default: ''
   },
   available: {

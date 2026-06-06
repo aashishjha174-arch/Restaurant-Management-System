@@ -5,6 +5,10 @@ const galleryImageSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  publicId: {
+    type: String, // Cloudinary public_id for deletion
+    default: ''
+  },
   caption: {
     type: String,
     trim: true,
