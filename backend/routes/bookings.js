@@ -28,8 +28,8 @@ function generateBookingId() {
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_SERVER,
-  port: Number(process.env.SMTP_PORT),
-  secure: false, // must be false for 587
+  port: 465,
+  secure: true, // IMPORTANT
   auth: {
     user: process.env.SMTP_LOGIN,
     pass: process.env.SMTP_KEY
