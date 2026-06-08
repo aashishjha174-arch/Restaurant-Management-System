@@ -2,54 +2,41 @@
 
 const API_BASE = 'https://restaurant-management-system-r5mg.onrender.com';
 
-// Resolve relative /uploads/ paths to full backend URL
 function resolveImageUrl(url) {
   if (!url) return '';
   if (url.startsWith('/uploads/')) return `${API_BASE}${url}`;
   return url;
 }
 
-// Global state
 let currentBookings = [];
 let chartInstance = null;
 
-// Auth check
 function checkAuth() {
   const token = localStorage.getItem('sg_admin_token');
   const isLoginPage = window.location.pathname.endsWith('login.html') || window.location.pathname.includes('/admin/login');
-  if (!token && !isLoginPage) {
-    window.location.href = '/admin/login';
-  } else if (token && isLoginPage) {
-    window.location.href = '/admin/dashboard';
-  }
+  if (!token && !isLoginPage) window.location.href = '/admin/login';
+  else if (token && isLoginPage) window.location.href = '/admin/dashboard';
 }
 
 function getHeaders() {
   const token = localStorage.getItem('sg_admin_token');
-  return {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  };
+  return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 }
 
 // 1. LOGIN
 function initLoginPage() {
   const loginForm = document.getElementById('admin-login-form');
   if (!loginForm) return;
-
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
-
     try {
       const response = await fetch(`${API_BASE}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
       const data = await response.json();
-
       if (response.ok && data.success) {
         localStorage.setItem('sg_admin_token', data.token);
         localStorage.setItem('sg_admin_username', data.admin.username);
@@ -59,7 +46,6 @@ function initLoginPage() {
         showToast(data.message || 'Invalid username or password.', 'error');
       }
     } catch (error) {
-      console.error('Login error:', error);
       showToast('Connection error. Failed to log in.', 'error');
     }
   });
@@ -79,10 +65,7 @@ function initDashboardTabs() {
       tabPanels.forEach(p => p.classList.remove('active'));
       item.classList.add('active');
       const targetPanel = document.getElementById(tabId);
-      if (targetPanel) {
-        targetPanel.classList.add('active');
-        onTabActivated(tabId);
-      }
+      if (targetPanel) { targetPanel.classList.add('active'); onTabActivated(tabId); }
     });
   });
 
@@ -112,6 +95,7 @@ function onTabActivated(tabId) {
     case 'tab-menu': loadMenuTable(); break;
     case 'tab-gallery': loadGalleryManager(); break;
     case 'tab-reviews': loadReviewsManager(); break;
+    case 'tab-messages': loadMessagesManager(); break;
     case 'tab-settings': loadSettingsEditor(); break;
   }
 }
@@ -143,10 +127,8 @@ async function loadDashboardMetrics() {
     const revenueMonth = bookings
       .filter(b => {
         const bDate = new Date(b.date);
-        return bDate.getMonth() === currentMonth &&
-               bDate.getFullYear() === currentYear &&
-               b.paymentStatus === 'Paid' &&
-               b.status !== 'Cancelled';
+        return bDate.getMonth() === currentMonth && bDate.getFullYear() === currentYear &&
+               b.paymentStatus === 'Paid' && b.status !== 'Cancelled';
       })
       .reduce((sum, b) => sum + (b.seats * 750), 0);
 
@@ -158,38 +140,24 @@ async function loadDashboardMetrics() {
 
     renderPaymentChart(bookings);
     renderRecentBookings(bookings.slice(0, 5));
-  } catch (error) {
-    console.error('Metrics failed:', error);
-  }
+  } catch (error) { console.error('Metrics failed:', error); }
 }
 
 function renderPaymentChart(bookings) {
   const cashPaid = bookings.filter(b => b.paymentMethod === 'Cash' && b.paymentStatus === 'Paid').length;
   const onlinePaid = bookings.filter(b => b.paymentMethod === 'Online' && b.paymentStatus === 'Paid').length;
   const pending = bookings.filter(b => b.paymentStatus === 'Pending').length;
-
   const ctx = document.getElementById('payment-breakdown-chart');
   if (!ctx) return;
   if (chartInstance) chartInstance.destroy();
   if (typeof Chart === 'undefined') return;
-
   chartInstance = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: ['Cash Paid', 'Online Paid', 'Pending'],
-      datasets: [{
-        data: [cashPaid, onlinePaid, pending],
-        backgroundColor: ['#1a3a2a', '#c9a84c', '#e6dfd3'],
-        borderWidth: 1
-      }]
+      datasets: [{ data: [cashPaid, onlinePaid, pending], backgroundColor: ['#1a3a2a', '#c9a84c', '#e6dfd3'], borderWidth: 1 }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom', labels: { font: { family: 'Inter' } } }
-      }
-    }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
   });
 }
 
@@ -225,9 +193,7 @@ async function loadBookingsTable(filterType = 'all') {
     url += `?filter=${filterType}`;
   } else if (filterType.startsWith('range')) {
     const parts = filterType.split('&');
-    const startVal = parts[1].split('=')[1];
-    const endVal = parts[2].split('=')[1];
-    url += `?startDate=${startVal}&endDate=${endVal}`;
+    url += `?startDate=${parts[1].split('=')[1]}&endDate=${parts[2].split('=')[1]}`;
   }
 
   try {
@@ -236,9 +202,7 @@ async function loadBookingsTable(filterType = 'all') {
     const bookings = await res.json();
     currentBookings = bookings;
     renderBookingsList(bookings);
-  } catch (error) {
-    console.error('Load bookings table failed:', error);
-  }
+  } catch (error) { console.error('Load bookings table failed:', error); }
 }
 
 function renderBookingsList(bookings) {
@@ -258,20 +222,20 @@ function renderBookingsList(bookings) {
       <td style="text-align:center;"><strong>${b.seats}</strong></td>
       <td>${b.paymentMethod}</td>
       <td>
-        <select onchange="updateBookingPaymentStatus('${b._id}', this.value)" style="padding: 4px 8px; font-size: 0.8rem; border-radius:4px; font-weight:600;">
+        <select onchange="updateBookingPaymentStatus('${b._id}', this.value)" style="padding:4px 8px; font-size:0.8rem; border-radius:4px; font-weight:600;">
           <option value="Pending" ${b.paymentStatus === 'Pending' ? 'selected' : ''}>Pending</option>
           <option value="Paid" ${b.paymentStatus === 'Paid' ? 'selected' : ''}>Paid</option>
         </select>
       </td>
       <td>
-        <select onchange="updateBookingStatus('${b._id}', this.value)" style="padding: 4px 8px; font-size: 0.8rem; border-radius:4px; font-weight:600;">
+        <select onchange="updateBookingStatus('${b._id}', this.value)" style="padding:4px 8px; font-size:0.8rem; border-radius:4px; font-weight:600;">
           <option value="Confirmed" ${b.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
           <option value="Completed" ${b.status === 'Completed' ? 'selected' : ''}>Completed</option>
           <option value="Cancelled" ${b.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
         </select>
       </td>
       <td>
-        <button onclick="deleteBooking('${b._id}')" class="btn" style="background-color: var(--red); color: white; padding: 6px 12px; border-radius: 4px; font-size: 0.75rem;">Delete</button>
+        <button onclick="deleteBooking('${b._id}')" class="btn" style="background-color:var(--red); color:white; padding:6px 12px; border-radius:4px; font-size:0.75rem;">Delete</button>
       </td>
     `;
     tbody.appendChild(row);
@@ -280,18 +244,14 @@ function renderBookingsList(bookings) {
 
 window.updateBookingStatus = async (id, status) => {
   try {
-    const res = await fetch(`${API_BASE}/api/bookings/${id}`, {
-      method: 'PUT', headers: getHeaders(), body: JSON.stringify({ status })
-    });
+    const res = await fetch(`${API_BASE}/api/bookings/${id}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ status }) });
     if (res.ok) { showToast('Booking status updated', 'success'); loadBookingsTable('all'); }
   } catch (error) { console.error(error); }
 };
 
 window.updateBookingPaymentStatus = async (id, paymentStatus) => {
   try {
-    const res = await fetch(`${API_BASE}/api/bookings/${id}`, {
-      method: 'PUT', headers: getHeaders(), body: JSON.stringify({ paymentStatus })
-    });
+    const res = await fetch(`${API_BASE}/api/bookings/${id}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ paymentStatus }) });
     if (res.ok) { showToast('Payment status updated', 'success'); loadBookingsTable('all'); }
   } catch (error) { console.error(error); }
 };
@@ -306,15 +266,12 @@ window.deleteBooking = async (id) => {
 
 function exportBookingsToCSV() {
   if (currentBookings.length === 0) { showToast('No bookings to export.', 'error'); return; }
-  let csvContent = 'data:text/csv;charset=utf-8,';
-  csvContent += 'Booking ID,Customer Name,Email,Phone,Date,Time Slot,Seats,Payment Method,Payment Status,Status\n';
+  let csvContent = 'data:text/csv;charset=utf-8,Booking ID,Customer Name,Email,Phone,Date,Time Slot,Seats,Payment Method,Payment Status,Status\n';
   currentBookings.forEach(b => {
-    const row = [b.bookingId, `"${b.name}"`, b.email, b.phone, b.date, `"${b.time}"`, b.seats, b.paymentMethod, b.paymentStatus, b.status].join(',');
-    csvContent += row + '\n';
+    csvContent += [b.bookingId, `"${b.name}"`, b.email, b.phone, b.date, `"${b.time}"`, b.seats, b.paymentMethod, b.paymentStatus, b.status].join(',') + '\n';
   });
-  const encodedUri = encodeURI(csvContent);
   const link = document.createElement('a');
-  link.setAttribute('href', encodedUri);
+  link.setAttribute('href', encodeURI(csvContent));
   link.setAttribute('download', `Secret_Garden_Bookings_${new Date().toISOString().split('T')[0]}.csv`);
   document.body.appendChild(link);
   link.click();
@@ -326,21 +283,18 @@ async function loadMenuTable() {
   const tbody = document.getElementById('menu-table-tbody');
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Loading menu items...</td></tr>';
-
   try {
     const response = await fetch(`${API_BASE}/api/menu`);
     const items = await response.json();
     tbody.innerHTML = '';
-
     if (items.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px;">No items added yet!</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No items added yet!</td></tr>';
       return;
     }
-
     items.forEach(item => {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td style="width: 70px;">
+        <td style="width:70px;">
           ${item.image
             ? `<img src="${resolveImageUrl(item.image)}" style="width:50px; height:50px; object-fit:cover; border-radius:6px; border:1px solid var(--secondary);">`
             : `<div style="width:50px; height:50px; background:#e6dfd3; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:var(--primary); font-weight:600;">No Pic</div>`
@@ -357,18 +311,15 @@ async function loadMenuTable() {
         </td>
         <td>
           <div style="display:flex; gap:8px;">
-            <button onclick="openEditMenuModal('${encodeURIComponent(JSON.stringify(item))}')" class="btn" style="background-color: var(--secondary); color: var(--dark); padding: 5px 10px; border-radius: 4px; font-size:0.75rem;">Edit</button>
-            <button onclick="deleteMenuItem('${item._id}')" class="btn" style="background-color: var(--red); color: white; padding: 5px 10px; border-radius: 4px; font-size:0.75rem;">Delete</button>
+            <button onclick="openEditMenuModal('${encodeURIComponent(JSON.stringify(item))}')" class="btn" style="background-color:var(--secondary); color:var(--dark); padding:5px 10px; border-radius:4px; font-size:0.75rem;">Edit</button>
+            <button onclick="deleteMenuItem('${item._id}')" class="btn" style="background-color:var(--red); color:white; padding:5px 10px; border-radius:4px; font-size:0.75rem;">Delete</button>
           </div>
         </td>
       `;
       tbody.appendChild(row);
     });
-
     updateCategoryReorderList(items);
-  } catch (error) {
-    console.error('Load menu table failed:', error);
-  }
+  } catch (error) { console.error('Load menu table failed:', error); }
 }
 
 window.toggleMenuItemAvailability = async (id, available) => {
@@ -385,10 +336,7 @@ window.toggleMenuItemAvailability = async (id, available) => {
 window.deleteMenuItem = async (id) => {
   if (!confirm('Delete this menu item permanently?')) return;
   try {
-    const res = await fetch(`${API_BASE}/api/menu/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('sg_admin_token')}` }
-    });
+    const res = await fetch(`${API_BASE}/api/menu/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('sg_admin_token')}` } });
     if (res.ok) { showToast('Menu item deleted', 'success'); loadMenuTable(); }
   } catch (error) { console.error(error); }
 };
@@ -396,15 +344,12 @@ window.deleteMenuItem = async (id) => {
 function initMenuFormSubmission() {
   const form = document.getElementById('add-menu-item-form');
   if (!form) return;
-
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
     try {
       const response = await fetch(`${API_BASE}/api/menu`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('sg_admin_token')}` },
-        body: formData
+        method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('sg_admin_token')}` }, body: formData
       });
       const data = await response.json();
       if (response.ok && data.success) {
@@ -412,13 +357,8 @@ function initMenuFormSubmission() {
         form.reset();
         document.getElementById('menu-item-modal').classList.remove('active');
         loadMenuTable();
-      } else {
-        showToast(data.message || 'Failed to add item.', 'error');
-      }
-    } catch (err) {
-      console.error(err);
-      showToast('Error uploading menu item.', 'error');
-    }
+      } else { showToast(data.message || 'Failed to add item.', 'error'); }
+    } catch (err) { showToast('Error uploading menu item.', 'error'); }
   });
 
   const editForm = document.getElementById('edit-menu-item-form');
@@ -429,18 +369,14 @@ function initMenuFormSubmission() {
       const formData = new FormData(editForm);
       try {
         const response = await fetch(`${API_BASE}/api/menu/${itemId}`, {
-          method: 'PUT',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('sg_admin_token')}` },
-          body: formData
+          method: 'PUT', headers: { 'Authorization': `Bearer ${localStorage.getItem('sg_admin_token')}` }, body: formData
         });
         const data = await response.json();
         if (response.ok && data.success) {
           showToast('Menu item updated successfully', 'success');
           document.getElementById('edit-item-modal').classList.remove('active');
           loadMenuTable();
-        } else {
-          showToast(data.message || 'Failed to update item.', 'error');
-        }
+        } else { showToast(data.message || 'Failed to update item.', 'error'); }
       } catch (err) { console.error(err); }
     });
   }
@@ -489,14 +425,11 @@ window.shiftCategory = async (categoryName, direction) => {
     const temp = categoriesSwapped[index];
     categoriesSwapped[index] = categoriesSwapped[targetIndex];
     categoriesSwapped[targetIndex] = temp;
-    const updateBatch = [];
-    items.forEach(item => {
-      const newCatIndex = categoriesSwapped.indexOf(item.category);
-      updateBatch.push({ id: item._id, category: item.category, order: newCatIndex * 10 + item.order % 10 });
-    });
-    const res = await fetch(`${API_BASE}/api/menu/reorder/batch`, {
-      method: 'PUT', headers: getHeaders(), body: JSON.stringify({ items: updateBatch })
-    });
+    const updateBatch = items.map(item => ({
+      id: item._id, category: item.category,
+      order: categoriesSwapped.indexOf(item.category) * 10 + item.order % 10
+    }));
+    const res = await fetch(`${API_BASE}/api/menu/reorder/batch`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ items: updateBatch }) });
     if (res.ok) { showToast('Categories reordered', 'success'); loadMenuTable(); }
   } catch (error) { console.error(error); }
 };
@@ -505,18 +438,15 @@ window.shiftCategory = async (categoryName, direction) => {
 async function loadGalleryManager() {
   const container = document.getElementById('gallery-manager-grid');
   if (!container) return;
-  container.innerHTML = '<div style="text-align:center; padding: 30px;">Loading pictures...</div>';
-
+  container.innerHTML = '<div style="text-align:center; padding:30px;">Loading pictures...</div>';
   try {
     const res = await fetch(`${API_BASE}/api/gallery`);
     const images = await res.json();
     container.innerHTML = '';
-
     if (images.length === 0) {
       container.innerHTML = '<div style="text-align:center; padding:20px; grid-column:1/-1;">No pictures uploaded yet.</div>';
       return;
     }
-
     images.forEach(img => {
       const card = document.createElement('div');
       card.className = 'gallery-item';
@@ -524,7 +454,7 @@ async function loadGalleryManager() {
       card.innerHTML = `
         <img src="${resolveImageUrl(img.url)}" style="height:150px; object-fit:cover; width:100%;" onerror="this.style.display='none'">
         <div style="padding:10px; font-size:0.8rem; font-weight:500;">${img.caption || 'No caption'}</div>
-        <button onclick="deleteGalleryPhoto('${img._id}')" class="btn" style="position:absolute; top:10px; right:10px; background-color: var(--red); color: white; padding: 4px 8px; border-radius:4px; font-size:0.7rem;">Delete</button>
+        <button onclick="deleteGalleryPhoto('${img._id}')" class="btn" style="position:absolute; top:10px; right:10px; background-color:var(--red); color:white; padding:4px 8px; border-radius:4px; font-size:0.7rem;">Delete</button>
       `;
       container.appendChild(card);
     });
@@ -542,15 +472,12 @@ window.deleteGalleryPhoto = async (id) => {
 function initGalleryFormSubmission() {
   const form = document.getElementById('upload-gallery-photo-form');
   if (!form) return;
-
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
     try {
       const response = await fetch(`${API_BASE}/api/gallery`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('sg_admin_token')}` },
-        body: formData
+        method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('sg_admin_token')}` }, body: formData
       });
       const data = await response.json();
       if (response.ok && data.success) {
@@ -558,13 +485,8 @@ function initGalleryFormSubmission() {
         form.reset();
         document.getElementById('gallery-photo-modal').classList.remove('active');
         loadGalleryManager();
-      } else {
-        showToast(data.message || 'Upload failed.', 'error');
-      }
-    } catch (err) {
-      console.error(err);
-      showToast('Error uploading photo.', 'error');
-    }
+      } else { showToast(data.message || 'Upload failed.', 'error'); }
+    } catch (err) { showToast('Error uploading photo.', 'error'); }
   });
 }
 
@@ -573,23 +495,19 @@ async function loadReviewsManager() {
   const container = document.getElementById('reviews-moderation-tbody');
   if (!container) return;
   container.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading reviews...</td></tr>';
-
   try {
     const res = await fetch(`${API_BASE}/api/reviews/admin`, { headers: getHeaders() });
     if (res.status === 401) return handleSessionExpired();
     const data = await res.json();
-
     document.getElementById('mod-total-reviews').textContent = data.metrics.totalReviews;
     document.getElementById('mod-approved-reviews').textContent = data.metrics.approvedReviews;
     document.getElementById('mod-pending-reviews').textContent = data.metrics.pendingReviews;
     document.getElementById('mod-avg-rating').textContent = `${data.metrics.averageRating} ★`;
-
     container.innerHTML = '';
     if (data.reviews.length === 0) {
-      container.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">No reviews yet.</td></tr>';
+      container.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No reviews yet.</td></tr>';
       return;
     }
-
     data.reviews.forEach(r => {
       const date = new Date(r.createdAt).toLocaleDateString();
       const row = document.createElement('tr');
@@ -598,17 +516,17 @@ async function loadReviewsManager() {
         <td><span style="color:var(--secondary); font-size:1.1rem;">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span></td>
         <td><p style="font-size:0.85rem; font-style:italic; max-width:350px;">"${r.text}"</p></td>
         <td>
-          <span class="badge" style="background-color: ${r.approved ? '#e8f5e9' : '#fff3e0'}; color: ${r.approved ? 'var(--green)' : '#ef6c00'};">
+          <span class="badge" style="background-color:${r.approved ? '#e8f5e9' : '#fff3e0'}; color:${r.approved ? 'var(--green)' : '#ef6c00'};">
             ${r.approved ? 'Approved' : 'Pending'}
           </span>
         </td>
         <td>
           <div style="display:flex; gap:8px;">
             ${r.approved
-              ? `<button onclick="toggleReviewApproval('${r._id}', false)" class="btn" style="background-color: var(--primary); color: var(--bg-cream); padding:5px 8px; border-radius:4px; font-size:0.7rem;">Unapprove</button>`
-              : `<button onclick="toggleReviewApproval('${r._id}', true)" class="btn" style="background-color: var(--green); color: white; padding:5px 8px; border-radius:4px; font-size:0.7rem;">Approve</button>`
+              ? `<button onclick="toggleReviewApproval('${r._id}', false)" class="btn" style="background-color:var(--primary); color:var(--bg-cream); padding:5px 8px; border-radius:4px; font-size:0.7rem;">Unapprove</button>`
+              : `<button onclick="toggleReviewApproval('${r._id}', true)" class="btn" style="background-color:var(--green); color:white; padding:5px 8px; border-radius:4px; font-size:0.7rem;">Approve</button>`
             }
-            <button onclick="deleteReview('${r._id}')" class="btn" style="background-color: var(--red); color: white; padding:5px 8px; border-radius:4px; font-size:0.7rem;">Delete</button>
+            <button onclick="deleteReview('${r._id}')" class="btn" style="background-color:var(--red); color:white; padding:5px 8px; border-radius:4px; font-size:0.7rem;">Delete</button>
           </div>
         </td>
       `;
@@ -619,9 +537,7 @@ async function loadReviewsManager() {
 
 window.toggleReviewApproval = async (id, approved) => {
   try {
-    const res = await fetch(`${API_BASE}/api/reviews/${id}/approve`, {
-      method: 'PUT', headers: getHeaders(), body: JSON.stringify({ approved })
-    });
+    const res = await fetch(`${API_BASE}/api/reviews/${id}/approve`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ approved }) });
     if (res.ok) { showToast(approved ? 'Review approved' : 'Review unapproved', 'success'); loadReviewsManager(); }
   } catch (error) { console.error(error); }
 };
@@ -634,7 +550,60 @@ window.deleteReview = async (id) => {
   } catch (error) { console.error(error); }
 };
 
-// 8. SETTINGS
+// 8. MESSAGES MANAGEMENT
+async function loadMessagesManager() {
+  const container = document.getElementById('messages-tbody');
+  if (!container) return;
+  container.innerHTML = '<tr><td colspan="5" style="text-align:center;">Loading messages...</td></tr>';
+  try {
+    const res = await fetch(`${API_BASE}/api/messages`, { headers: getHeaders() });
+    if (res.status === 401) return handleSessionExpired();
+    const messages = await res.json();
+    container.innerHTML = '';
+    if (messages.length === 0) {
+      container.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">No messages yet.</td></tr>';
+      return;
+    }
+    messages.forEach(m => {
+      const date = new Date(m.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      const row = document.createElement('tr');
+      row.style.background = m.read ? 'transparent' : '#fffbf0';
+      row.innerHTML = `
+        <td><strong>${m.name}</strong></td>
+        <td><a href="mailto:${m.email}" style="color:var(--secondary);">${m.email}</a></td>
+        <td style="max-width:350px; font-size:0.85rem;">${m.message}</td>
+        <td><small style="color:gray;">${date}</small></td>
+        <td>
+          <div style="display:flex; gap:8px;">
+            ${!m.read
+              ? `<button onclick="markMessageRead('${m._id}')" class="btn" style="background-color:var(--primary); color:white; padding:5px 8px; border-radius:4px; font-size:0.7rem;">Mark Read</button>`
+              : `<span style="color:var(--green); font-size:0.75rem; font-weight:600;">✓ Read</span>`
+            }
+            <button onclick="deleteMessage('${m._id}')" class="btn" style="background-color:var(--red); color:white; padding:5px 8px; border-radius:4px; font-size:0.7rem;">Delete</button>
+          </div>
+        </td>
+      `;
+      container.appendChild(row);
+    });
+  } catch (err) { console.error(err); }
+}
+
+window.markMessageRead = async (id) => {
+  try {
+    const res = await fetch(`${API_BASE}/api/messages/${id}/read`, { method: 'PUT', headers: getHeaders() });
+    if (res.ok) { showToast('Marked as read', 'success'); loadMessagesManager(); }
+  } catch (err) { console.error(err); }
+};
+
+window.deleteMessage = async (id) => {
+  if (!confirm('Delete this message permanently?')) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/messages/${id}`, { method: 'DELETE', headers: getHeaders() });
+    if (res.ok) { showToast('Message deleted', 'success'); loadMessagesManager(); }
+  } catch (err) { console.error(err); }
+};
+
+// 9. SETTINGS
 async function loadSettingsEditor() {
   const form = document.getElementById('restaurant-settings-form');
   if (!form) return;
@@ -662,9 +631,7 @@ function initSettingsSubmissions() {
         address: document.getElementById('settings-address-input').value
       };
       try {
-        const res = await fetch(`${API_BASE}/api/settings`, {
-          method: 'PUT', headers: getHeaders(), body: JSON.stringify(payload)
-        });
+        const res = await fetch(`${API_BASE}/api/settings`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(payload) });
         if (res.ok) { showToast('Settings saved successfully', 'success'); loadSettingsEditor(); }
         else { showToast('Failed to save settings.', 'error'); }
       } catch (err) { console.error(err); }
@@ -680,9 +647,7 @@ function initSettingsSubmissions() {
       const confirmPass = document.getElementById('confirm-password-input').value;
       if (newPassword !== confirmPass) { showToast('Passwords do not match!', 'error'); return; }
       try {
-        const res = await fetch(`${API_BASE}/api/settings/password`, {
-          method: 'PUT', headers: getHeaders(), body: JSON.stringify({ oldPassword, newPassword })
-        });
+        const res = await fetch(`${API_BASE}/api/settings/password`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ oldPassword, newPassword }) });
         const data = await res.json();
         if (res.ok && data.success) { showToast('Password changed successfully!', 'success'); passForm.reset(); }
         else { showToast(data.message || 'Failed to change password.', 'error'); }
@@ -698,12 +663,11 @@ function handleSessionExpired() {
   setTimeout(() => { window.location.href = '/admin/login'; }, 1500);
 }
 
-// 9. MODALS
+// 10. MODALS
 function initModalTriggers() {
   const triggers = document.querySelectorAll('[data-modal-target]');
   const closes = document.querySelectorAll('.modal-close');
   const modals = document.querySelectorAll('.modal');
-
   triggers.forEach(t => {
     t.addEventListener('click', (e) => {
       e.preventDefault();
@@ -711,14 +675,8 @@ function initModalTriggers() {
       if (target) target.classList.add('active');
     });
   });
-
-  closes.forEach(c => {
-    c.addEventListener('click', () => { modals.forEach(m => m.classList.remove('active')); });
-  });
-
-  window.addEventListener('click', (e) => {
-    modals.forEach(m => { if (e.target === m) m.classList.remove('active'); });
-  });
+  closes.forEach(c => { c.addEventListener('click', () => { modals.forEach(m => m.classList.remove('active')); }); });
+  window.addEventListener('click', (e) => { modals.forEach(m => { if (e.target === m) m.classList.remove('active'); }); });
 }
 
 // DOM Setup

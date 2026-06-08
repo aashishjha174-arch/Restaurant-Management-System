@@ -2,14 +2,12 @@
 
 window.API_BASE = 'https://restaurant-management-system-r5mg.onrender.com';
 
-// Resolve image URLs: if stored as relative /uploads/ path, prepend backend URL
 function resolveImageUrl(url) {
   if (!url) return '';
   if (url.startsWith('/uploads/')) return `${API_BASE}${url}`;
-  return url; // already a full URL
+  return url;
 }
 
-// Global notification system
 function showToast(message, type = 'success') {
   let toastContainer = document.getElementById('toast-notification');
   if (!toastContainer) {
@@ -18,50 +16,34 @@ function showToast(message, type = 'success') {
     toastContainer.className = 'toast';
     document.body.appendChild(toastContainer);
   }
-
   toastContainer.classList.remove('toast-success', 'toast-error');
   toastContainer.classList.add(`toast-${type}`);
-  
   toastContainer.innerHTML = `
     <span>${type === 'success' ? '✓' : '✗'}</span>
     <div>${message}</div>
   `;
-  
   toastContainer.classList.add('active');
-  
-  setTimeout(() => {
-    toastContainer.classList.remove('active');
-  }, 4000);
+  setTimeout(() => { toastContainer.classList.remove('active'); }, 4000);
 }
 
-// 1. Fetch & Apply Dynamic Restaurant Settings
+// 1. Restaurant Settings
 async function loadRestaurantSettings() {
   try {
     const response = await fetch(`${API_BASE}/api/settings`);
     const settings = await response.json();
     if (!settings) return;
 
-    const addressElements = document.querySelectorAll('.settings-address');
-    const phoneElements = document.querySelectorAll('.settings-phone');
-    const hoursElements = document.querySelectorAll('.settings-hours');
-    const facebookElements = document.querySelectorAll('.settings-facebook');
-    const instagramElements = document.querySelectorAll('.settings-instagram');
-
-    addressElements.forEach(el => el.textContent = settings.address);
-    phoneElements.forEach(el => {
+    document.querySelectorAll('.settings-address').forEach(el => el.textContent = settings.address);
+    document.querySelectorAll('.settings-phone').forEach(el => {
       el.textContent = settings.phone;
-      if (el.tagName === 'A') {
-        el.href = `tel:${settings.phone.replace(/[^0-9+]/g, '')}`;
-      }
+      if (el.tagName === 'A') el.href = `tel:${settings.phone.replace(/[^0-9+]/g, '')}`;
     });
-    hoursElements.forEach(el => el.textContent = settings.openingHours);
-    
-    facebookElements.forEach(el => {
+    document.querySelectorAll('.settings-hours').forEach(el => el.textContent = settings.openingHours);
+    document.querySelectorAll('.settings-facebook').forEach(el => {
       if (el.tagName === 'A') el.href = settings.facebook;
       else el.textContent = settings.facebook;
     });
-
-    instagramElements.forEach(el => {
+    document.querySelectorAll('.settings-instagram').forEach(el => {
       if (el.tagName === 'A') el.href = settings.instagram;
       else el.textContent = settings.instagram;
     });
@@ -70,18 +52,15 @@ async function loadRestaurantSettings() {
   }
 }
 
-// 2. Mobile Navbar Menu Toggle & Header Scroll
+// 2. Navigation
 function initNavigation() {
   const header = document.querySelector('header');
   const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
   const navList = document.querySelector('nav ul');
 
   window.addEventListener('scroll', () => {
-    if (window.scrollY > 50) {
-      header.classList.add('scrolled');
-    } else {
-      header.classList.remove('scrolled');
-    }
+    if (window.scrollY > 50) header.classList.add('scrolled');
+    else header.classList.remove('scrolled');
   });
 
   if (mobileMenuBtn && navList) {
@@ -90,14 +69,12 @@ function initNavigation() {
       navList.classList.toggle('active');
       mobileMenuBtn.innerHTML = navList.classList.contains('active') ? '✕' : '☰';
     });
-
     document.querySelectorAll('nav ul li a').forEach(link => {
       link.addEventListener('click', () => {
         navList.classList.remove('active');
         mobileMenuBtn.innerHTML = '☰';
       });
     });
-
     document.addEventListener('click', (e) => {
       if (!navList.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
         navList.classList.remove('active');
@@ -107,12 +84,10 @@ function initNavigation() {
   }
 }
 
-// 3. GSAP Scroll Animations Initialization
+// 3. GSAP Animations
 function initScrollAnimations() {
   if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
-    const animatedElements = document.querySelectorAll('.animate-on-scroll, .feature-card, .menu-card');
-    animatedElements.forEach(el => el.style.opacity = 1);
-    
+    document.querySelectorAll('.animate-on-scroll, .feature-card, .menu-card').forEach(el => el.style.opacity = 1);
     const heroH1 = document.querySelector('.hero-content h1');
     const heroTag = document.querySelector('.hero-content .tagline');
     const heroDesc = document.querySelector('.hero-content .desc');
@@ -132,43 +107,26 @@ function initScrollAnimations() {
         .to('.hero-content .desc', { opacity: 1, y: 0 }, '-=0.7')
         .to('.hero-content .hero-btns', { opacity: 1, y: 0 }, '-=0.7');
 
-  const fadeUpElements = document.querySelectorAll('.animate-on-scroll');
-  fadeUpElements.forEach(el => {
-    gsap.fromTo(el, 
+  document.querySelectorAll('.animate-on-scroll').forEach(el => {
+    gsap.fromTo(el,
       { opacity: 0, y: 50 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 1.2,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: el,
-          start: 'top 85%',
-          toggleActions: 'play none none none'
-        }
+      { opacity: 1, y: 0, duration: 1.2, ease: 'power3.out',
+        scrollTrigger: { trigger: el, start: 'top 85%', toggleActions: 'play none none none' }
       }
     );
   });
 
   if (document.querySelector('.feature-card')) {
-    gsap.fromTo('.feature-card', 
+    gsap.fromTo('.feature-card',
       { opacity: 0, y: 40 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 1,
-        stagger: 0.2,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: '.features-grid',
-          start: 'top 85%'
-        }
+      { opacity: 1, y: 0, duration: 1, stagger: 0.2, ease: 'power3.out',
+        scrollTrigger: { trigger: '.features-grid', start: 'top 85%' }
       }
     );
   }
 }
 
-// 4. Menu Rendering & Filter logic
+// 4. Menu Page
 async function initMenuPage() {
   const menuContainer = document.getElementById('menu-items-grid');
   if (!menuContainer) return;
@@ -183,19 +141,13 @@ async function initMenuPage() {
 
     renderMenuItems(items);
 
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    filterButtons.forEach(btn => {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        filterButtons.forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-
         const category = btn.dataset.category;
-        if (category === 'all') {
-          renderMenuItems(items);
-        } else {
-          const filtered = items.filter(item => item.category.toLowerCase() === category.toLowerCase());
-          renderMenuItems(filtered);
-        }
+        if (category === 'all') renderMenuItems(items);
+        else renderMenuItems(items.filter(item => item.category.toLowerCase() === category.toLowerCase()));
       });
     });
   } catch (error) {
@@ -207,11 +159,9 @@ async function initMenuPage() {
 function renderMenuItems(items) {
   const menuContainer = document.getElementById('menu-items-grid');
   menuContainer.innerHTML = '';
-
   items.forEach(item => {
     const card = document.createElement('div');
     card.className = `menu-card animate-on-scroll ${item.available ? '' : 'unavailable-item'}`;
-    
     let imageHTML = '';
     if (item.image) {
       imageHTML = `<img src="${resolveImageUrl(item.image)}" alt="${item.name}" loading="lazy">`;
@@ -219,7 +169,6 @@ function renderMenuItems(items) {
       const initials = item.name.split(' ').map(n => n[0]).join('').slice(0, 2);
       imageHTML = `<div class="menu-placeholder-img">${initials}</div>`;
     }
-
     card.innerHTML = `
       <div class="menu-image-container">
         ${imageHTML}
@@ -240,7 +189,7 @@ function renderMenuItems(items) {
   });
 }
 
-// 5. Gallery Rendering and Lightbox
+// 5. Gallery Page
 async function initGalleryPage() {
   const galleryGrid = document.getElementById('gallery-items-grid');
   if (!galleryGrid) return;
@@ -257,7 +206,6 @@ async function initGalleryPage() {
       galleryGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px;">No photos available in gallery yet.</div>';
       return;
     }
-
     galleryGrid.innerHTML = '';
     images.forEach(img => {
       const item = document.createElement('div');
@@ -266,39 +214,27 @@ async function initGalleryPage() {
         <img src="${resolveImageUrl(img.url)}" alt="${img.caption || 'The Secret Garden'}" loading="lazy">
         ${img.caption ? `<div class="gallery-caption">${img.caption}</div>` : ''}
       `;
-      
       item.addEventListener('click', () => {
         lightboxImg.src = resolveImageUrl(img.url);
         lightboxCap.textContent = img.caption || 'The Secret Garden';
         lightbox.classList.add('active');
         document.body.style.overflow = 'hidden';
       });
-
       galleryGrid.appendChild(item);
     });
 
     if (lightboxClose && lightbox) {
-      const closeLightbox = () => {
-        lightbox.classList.remove('active');
-        document.body.style.overflow = '';
-      };
-      
+      const closeLightbox = () => { lightbox.classList.remove('active'); document.body.style.overflow = ''; };
       lightboxClose.addEventListener('click', closeLightbox);
-      lightbox.addEventListener('click', (e) => {
-        if (e.target === lightbox || e.target === lightboxClose) {
-          closeLightbox();
-        }
-      });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeLightbox();
-      });
+      lightbox.addEventListener('click', (e) => { if (e.target === lightbox || e.target === lightboxClose) closeLightbox(); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
     }
   } catch (error) {
     console.error('Gallery loading failed:', error);
   }
 }
 
-// 6. Reviews Page Rendering & Reviews Submission
+// 6. Reviews Page
 async function initReviewsPage() {
   const reviewsList = document.getElementById('reviews-list-container');
   if (!reviewsList) return;
@@ -310,12 +246,7 @@ async function initReviewsPage() {
       const name = document.getElementById('review-name').value;
       const text = document.getElementById('review-text').value;
       const rating = document.querySelector('input[name="rating"]:checked')?.value;
-
-      if (!rating) {
-        showToast('Please select a star rating.', 'error');
-        return;
-      }
-
+      if (!rating) { showToast('Please select a star rating.', 'error'); return; }
       try {
         const response = await fetch(`${API_BASE}/api/reviews`, {
           method: 'POST',
@@ -323,20 +254,14 @@ async function initReviewsPage() {
           body: JSON.stringify({ name, rating, text })
         });
         const resData = await response.json();
-        
-        if (resData.success) {
-          showToast(resData.message, 'success');
-          form.reset();
-        } else {
-          showToast(resData.message || 'Submission failed.', 'error');
-        }
+        if (resData.success) { showToast(resData.message, 'success'); form.reset(); }
+        else { showToast(resData.message || 'Submission failed.', 'error'); }
       } catch (err) {
         console.error('Error submitting review:', err);
         showToast('Failed to submit review. Connection error.', 'error');
       }
     });
   }
-
   loadApprovedReviews();
 }
 
@@ -345,19 +270,14 @@ async function loadApprovedReviews() {
   const avgNum = document.getElementById('avg-rating-value');
   const totalCount = document.getElementById('total-reviews-count');
   const avgStars = document.getElementById('avg-stars-display');
-
   if (!reviewsList) return;
 
   try {
     const response = await fetch(`${API_BASE}/api/reviews`);
     const data = await response.json();
-    
     if (avgNum) avgNum.textContent = data.averageRating || '0.0';
     if (totalCount) totalCount.textContent = `${data.totalReviews || 0} reviews`;
-    
-    if (avgStars) {
-      avgStars.innerHTML = getStarsHTML(Math.round(data.averageRating || 0));
-    }
+    if (avgStars) avgStars.innerHTML = getStarsHTML(Math.round(data.averageRating || 0));
 
     const breakdown = data.ratingBreakdown || {};
     const total = data.totalReviews || 1;
@@ -365,9 +285,7 @@ async function loadApprovedReviews() {
       const fillBar = document.getElementById(`bar-fill-${stars}`);
       const countLabel = document.getElementById(`bar-count-${stars}`);
       const count = breakdown[stars] || 0;
-      const percentage = (count / total) * 100;
-      
-      if (fillBar) fillBar.style.width = `${percentage}%`;
+      if (fillBar) fillBar.style.width = `${(count / total) * 100}%`;
       if (countLabel) countLabel.textContent = count;
     }
 
@@ -378,12 +296,7 @@ async function loadApprovedReviews() {
 
     reviewsList.innerHTML = '';
     data.reviews.forEach(review => {
-      const date = new Date(review.createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-
+      const date = new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
       const card = document.createElement('div');
       card.className = 'review-card';
       card.innerHTML = `
@@ -401,42 +314,53 @@ async function loadApprovedReviews() {
   }
 }
 
-// Helpers for star HTML creation
 function getStarsHTML(rating) {
   let stars = '';
-  for (let i = 1; i <= 5; i++) {
-    stars += i <= rating ? '★' : '☆';
-  }
+  for (let i = 1; i <= 5; i++) stars += i <= rating ? '★' : '☆';
   return stars;
 }
 
-// 7. Contact Form Simulation
+// 7. Contact Form — saves to database
 function initContactPage() {
   const form = document.getElementById('contact-form');
   if (!form) return;
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const name = document.getElementById('contact-name').value;
-    const email = document.getElementById('contact-email').value;
-    const message = document.getElementById('contact-message').value;
+    const name = document.getElementById('contact-name').value.trim();
+    const email = document.getElementById('contact-email').value.trim();
+    const message = document.getElementById('contact-message').value.trim();
 
     if (!name || !email || !message) {
       showToast('Please fill out all fields.', 'error');
       return;
     }
 
-    showToast(`Thank you ${name}! Your message was successfully received.`, 'success');
-    form.reset();
+    try {
+      const res = await fetch(`${API_BASE}/api/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(`Thank you ${name}! Your message was sent successfully.`, 'success');
+        form.reset();
+      } else {
+        showToast('Failed to send message. Please try again.', 'error');
+      }
+    } catch (err) {
+      console.error('Contact form error:', err);
+      showToast('Connection error. Please try again.', 'error');
+    }
   });
 }
 
-// DOM Setup Routing Initializations
+// DOM Setup
 document.addEventListener('DOMContentLoaded', () => {
   loadRestaurantSettings();
   initNavigation();
   initScrollAnimations();
-  
   initMenuPage();
   initGalleryPage();
   initReviewsPage();
