@@ -72,7 +72,11 @@ app.get('/admin/login', (req, res) => {
 app.get('/admin/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/admin/dashboard.html'));
 });
-
+// ===== LOADER.IO VERIFICATION =====
+app.get('/loaderio-72fd7305f28add9186604d4c0512c0a1.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('loaderio-72fd7305f28add9186604d4c0512c0a1');
+});
 // ===== 404 FALLBACK =====
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, '../frontend/pages/index.html'));
