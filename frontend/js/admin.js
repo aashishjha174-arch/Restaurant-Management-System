@@ -220,13 +220,6 @@ function renderBookingsList(bookings) {
       <td>${b.date}</td>
       <td><small>${b.time}</small></td>
       <td style="text-align:center;"><strong>${b.seats}</strong></td>
-      <td>${b.paymentMethod}</td>
-      <td>
-        <select onchange="updateBookingPaymentStatus('${b._id}', this.value)" style="padding:4px 8px; font-size:0.8rem; border-radius:4px; font-weight:600;">
-          <option value="Pending" ${b.paymentStatus === 'Pending' ? 'selected' : ''}>Pending</option>
-          <option value="Paid" ${b.paymentStatus === 'Paid' ? 'selected' : ''}>Paid</option>
-        </select>
-      </td>
       <td>
         <select onchange="updateBookingStatus('${b._id}', this.value)" style="padding:4px 8px; font-size:0.8rem; border-radius:4px; font-weight:600;">
           <option value="Confirmed" ${b.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
@@ -249,13 +242,6 @@ window.updateBookingStatus = async (id, status) => {
   } catch (error) { console.error(error); }
 };
 
-window.updateBookingPaymentStatus = async (id, paymentStatus) => {
-  try {
-    const res = await fetch(`${API_BASE}/api/bookings/${id}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ paymentStatus }) });
-    if (res.ok) { showToast('Payment status updated', 'success'); loadBookingsTable('all'); }
-  } catch (error) { console.error(error); }
-};
-
 window.deleteBooking = async (id) => {
   if (!confirm('Delete this reservation permanently?')) return;
   try {
@@ -266,9 +252,9 @@ window.deleteBooking = async (id) => {
 
 function exportBookingsToCSV() {
   if (currentBookings.length === 0) { showToast('No bookings to export.', 'error'); return; }
-  let csvContent = 'data:text/csv;charset=utf-8,Booking ID,Customer Name,Email,Phone,Date,Time Slot,Seats,Payment Method,Payment Status,Status\n';
+  let csvContent = 'data:text/csv;charset=utf-8,Booking ID,Customer Name,Email,Phone,Date,Time Slot,Seats,Status\n';
   currentBookings.forEach(b => {
-    csvContent += [b.bookingId, `"${b.name}"`, b.email, b.phone, b.date, `"${b.time}"`, b.seats, b.paymentMethod, b.paymentStatus, b.status].join(',') + '\n';
+    csvContent += [b.bookingId, `"${b.name}"`, b.email, b.phone, b.date, `"${b.time}"`, b.seats, b.status].join(',') + '\n';
   });
   const link = document.createElement('a');
   link.setAttribute('href', encodeURI(csvContent));

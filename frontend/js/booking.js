@@ -87,11 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const date = dateInput.value;
     const seats = parseInt(seatsInput.value);
     const selectedSlotRadio = document.querySelector('input[name="timeSlot"]:checked');
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+    const paymentMethod = 'Cash';
     const specialRequests = document.getElementById('booking-requests').value.trim();
 
-    // Validate all fields
-    if (!name || !email || !phone || !date || !seats || !selectedSlotRadio || !paymentMethod) {
+  // Validate all fields
+    if (!name || !email || !phone || !date || !seats || !selectedSlotRadio) {
       showToast('Please complete all required fields.', 'error');
       return;
     }
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('receipt-date').textContent = booking.date;
     document.getElementById('receipt-time').textContent = booking.time;
     document.getElementById('receipt-seats').textContent = `${booking.seats} Seats`;
-    document.getElementById('receipt-payment').textContent = `${booking.paymentMethod} (${booking.paymentStatus})`;
+    document.getElementById('receipt-payment').textContent = `Cash on arrival`;
 
     // Scroll receipt to viewport
     successCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
